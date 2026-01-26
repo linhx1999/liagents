@@ -1,6 +1,6 @@
 import os
 from openai import OpenAI
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Iterator
 
 
 class Client:
