@@ -16,23 +16,22 @@ def _map_parameter_type(param_type: str) -> str:
     return "string"
 
 
-class FunctionCallAgent(Agent):
+class OpenAIFuncCallAgent(Agent):
     """基于OpenAI原生函数调用机制的Agent"""
 
     def __init__(
         self,
         name: str,
-        llm: Client,
-        system_prompt: Optional[str] = None,
+        client: Client,
+        system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: Optional["ToolRegistry"] = None,
-        enable_tool_calling: bool = True,
         default_tool_choice: Union[str, dict] = "auto",
-        max_tool_iterations: int = 3,
+        max_tool_iterations: int = 10,
     ):
-        super().__init__(name, llm, system_prompt, config)
-        self.tool_registry = tool_registry
-        self.enable_tool_calling = enable_tool_calling and tool_registry is not None
+        super().__init__(name, client, system_prompt, config)
+        self.tool_registry = tool_registry or ToolRegistry()
+        self._history: list[Message] = []
         self.default_tool_choice = default_tool_choice
         self.max_tool_iterations = max_tool_iterations
 
@@ -40,7 +39,7 @@ class FunctionCallAgent(Agent):
         """构建系统提示词，注入工具描述"""
         base_prompt = self.system_prompt or "你是一个可靠的AI助理，能够在需要时调用工具完成任务。"
 
-        if not self.enable_tool_calling or not self.tool_registry:
+        if not self.tool_registry:
             return base_prompt
 
         tools_description = self.tool_registry.get_tools_description()
@@ -54,7 +53,7 @@ class FunctionCallAgent(Agent):
         return prompt
 
     def _build_tool_schemas(self) -> list[dict[str, Any]]:
-        if not self.enable_tool_calling or not self.tool_registry:
+        if not self.tool_registry:
             return []
 
         schemas: list[dict[str, Any]] = []
@@ -339,7 +338,6 @@ class FunctionCallAgent(Agent):
             from ..tools.registry import ToolRegistry
 
             self.tool_registry = ToolRegistry()
-            self.enable_tool_calling = True
 
         if hasattr(tool, "auto_expand") and getattr(tool, "auto_expand"):
             expanded_tools = tool.get_expanded_tools()
@@ -365,7 +363,7 @@ class FunctionCallAgent(Agent):
         return []
 
     def has_tools(self) -> bool:
-        return self.enable_tool_calling and self.tool_registry is not None
+        return self.tool_registry is not None
 
     def stream_run(self, input_text: str, **kwargs) -> Iterator[str]:
         """流式调用暂未实现，直接回退到一次性调用"""
