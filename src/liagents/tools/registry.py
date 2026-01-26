@@ -1,4 +1,4 @@
-from typing import Optional, Any, Callable
+from typing import Optional, Any
 from .base import Tool
 
 
