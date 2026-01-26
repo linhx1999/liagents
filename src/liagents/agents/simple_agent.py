@@ -20,7 +20,7 @@ class SimpleAgent(Agent):
         self,
         name: str,
         client: Client,
-        system_prompt: Optional[str] = None,
+        system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: Optional[ToolRegistry] = None,
     ):
@@ -40,7 +40,7 @@ class SimpleAgent(Agent):
 
     def _get_enhanced_system_prompt(self) -> str:
         """构建增强的系统提示词，包含工具信息"""
-        base_prompt = (self.system_prompt or "你是一个有用的AI助手。").strip()
+        base_prompt = self.system_prompt.strip()
 
         if not self.tool_registry:
             return base_prompt
