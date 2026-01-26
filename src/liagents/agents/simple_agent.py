@@ -1,5 +1,6 @@
 from typing import Optional, Iterator, TYPE_CHECKING
 import re
+import json
 
 from ..core.agent import Agent
 from ..core.client import Client
@@ -58,24 +59,46 @@ class SimpleAgent(Agent):
             "</tools>\n\n"
             "For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n"
             "<tool_call>\n"
-            "{\"name\": \"<function-name>\", \"arguments\": <args-json-object>}\n"
+            '{"name": "<function-name>", "arguments": <args-json-object>}\n'
             "</tool_call>"
         )
 
         return base_prompt + tools_section
 
     def _parse_tool_calls(self, text: str) -> list:
-        """解析文本中的工具调用"""
-        pattern = r"\[TOOL_CALL:([^:]+):([^\]]+)\]"
-        matches = re.findall(pattern, text)
+        """
+        解析文本中的工具调用
+
+        支持格式：
+        <tool_call>
+        {"name": "function_name", "arguments": {"key": "value"}}
+        </tool_call>
+        """
 
         tool_calls = []
-        for tool_name, parameters in matches:
+
+        # 使用正则表达式匹配 <invoke> 标签内容
+        pattern = r"<tool_call>\s*\n?({.+?})\s*\n?</tool_call>"
+        matches = re.findall(pattern, text, re.DOTALL)
+
+        for json_str in matches:
+            # 解析 JSON
+            call_data = json.loads(json_str)
+
+            tool_name = call_data.get("name", "")
+            arguments = call_data.get("arguments", {})
+
+            # 将 arguments 转换为字符串格式（保持与后续代码兼容）
+            if isinstance(arguments, dict):
+                parameters = json.dumps(arguments)
+            else:
+                parameters = str(arguments)
+
             tool_calls.append(
                 {
-                    "tool_name": tool_name.strip(),
-                    "parameters": parameters.strip(),
-                    "original": f"[TOOL_CALL:{tool_name}:{parameters}]",
+                    "tool_name": tool_name,
+                    "parameters": parameters,
+                    "original": f"<tool_call>\n{json_str}\n</tool_call>",
                 }
             )
 
