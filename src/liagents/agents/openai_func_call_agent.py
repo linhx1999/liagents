@@ -35,23 +35,6 @@ class OpenAIFuncCallAgent(Agent):
         self.default_tool_choice = default_tool_choice
         self.max_tool_iterations = max_tool_iterations
 
-    def _get_system_prompt(self) -> str:
-        """构建系统提示词，注入工具描述"""
-        base_prompt = self.system_prompt or "你是一个可靠的AI助理，能够在需要时调用工具完成任务。"
-
-        if not self.tool_registry:
-            return base_prompt
-
-        tools_description = self.tool_registry.get_tools_description()
-        if not tools_description or tools_description == "暂无可用工具":
-            return base_prompt
-
-        prompt = base_prompt + "\n\n## 可用工具\n"
-        prompt += "当你判断需要外部信息或执行动作时，可以直接通过函数调用使用以下工具：\n"
-        prompt += tools_description + "\n"
-        prompt += "\n请主动决定是否调用工具，合理利用多次调用来获得完备答案。"
-        return prompt
-
     def _build_tool_schemas(self) -> list[dict[str, Any]]:
         if not self.tool_registry:
             return []
@@ -247,8 +230,7 @@ class OpenAIFuncCallAgent(Agent):
         执行函数调用范式的对话流程
         """
         messages: list[dict[str, Any]] = []
-        system_prompt = self._get_system_prompt()
-        messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "system", "content": self.system_prompt})
 
         for msg in self._history:
             messages.append({"role": msg.role, "content": msg.content})
