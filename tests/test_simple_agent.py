@@ -117,9 +117,7 @@ class TestSimpleAgentInit:
 
         assert agent.system_prompt == ""
 
-    def test_init_with_tool_registry(
-        self, mock_client, mock_config, mock_tool_registry
-    ):
+    def test_init_with_tool_registry(self, mock_client, mock_tool_registry):
         """测试带工具注册表的初始化"""
         agent = SimpleAgent(
             name="test_agent", client=mock_client, tool_registry=mock_tool_registry
@@ -127,7 +125,7 @@ class TestSimpleAgentInit:
 
         assert agent.tool_registry == mock_tool_registry
 
-    def test_init_creates_default_tool_registry(self, mock_client, mock_config):
+    def test_init_creates_default_tool_registry(self, mock_client):
         """测试默认创建 ToolRegistry"""
         agent = SimpleAgent(name="test_agent", client=mock_client)
 
@@ -151,8 +149,7 @@ class TestGetEnhancedSystemPrompt:
         agent = SimpleAgent(name="test_agent", client=mock_client, config=mock_config)
         prompt = agent._get_enhanced_system_prompt()
 
-        # 当没有提供 system_prompt 时，应该返回空字符串（不添加系统消息）
-        assert prompt == "" or prompt is None
+        assert prompt == ""
 
     def test_with_tools(self, simple_agent_with_tools):
         """测试带工具时的系统提示词"""
@@ -166,7 +163,7 @@ class TestGetEnhancedSystemPrompt:
         assert "</tools>" in prompt
         assert "tool_call" in prompt
 
-    def test_with_empty_tool_registry(self, mock_client, mock_config):
+    def test_with_empty_tool_registry(self, mock_client):
         """测试空工具注册表"""
         empty_registry = ToolRegistry()
         agent = SimpleAgent(
