@@ -1,15 +1,6 @@
 import os
 from openai import OpenAI
-from typing import List, Dict, Literal, Optional
-
-# 支持的LLM提供商
-SUPPORTED_PROVIDERS = Literal[
-    "openai",
-    "vllm",
-    "local",
-    "auto",
-    "custom",
-]
+from typing import List, Dict, Optional
 
 
 class Client:
@@ -18,7 +9,6 @@ class Client:
     # 实例属性类型声明
     _model: str
     _client: OpenAI
-    _provider: SUPPORTED_PROVIDERS
     _temperature: float
     _max_completion_tokens: Optional[int] = None
 
@@ -27,16 +17,11 @@ class Client:
         model: str = os.getenv("MODEL", ""),
         api_key: str = os.getenv("OPENAI_API_KEY", ""),
         base_url: str = os.getenv("OPENAI_BASE_URL", ""),
-        provider: SUPPORTED_PROVIDERS = "openai",
         temperature: float = 0.7,
         max_completion_tokens: Optional[int] = None,
         timeout: int = 60,
     ):
-        """
-        初始化客户端。优先使用传入参数，如果未提供，则从环境变量加载。
-        """
         self._model = model
-        self._provider = provider
         self._temperature = temperature
         self._max_completion_tokens = max_completion_tokens
 
