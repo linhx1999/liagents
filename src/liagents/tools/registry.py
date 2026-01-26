@@ -33,13 +33,13 @@ class ToolRegistry:
         """获取Tool对象"""
         return self._tools.get(name)
 
-    def execute_tool(self, name: str, input_text: str) -> str:
+    def execute_tool(self, name: str, parameters: dict[str, Any]) -> str:
         """
         执行工具
 
         Args:
             name: 工具名称
-            input_text: 输入参数
+            parameters: 输入参数
 
         Returns:
             工具执行结果
@@ -48,8 +48,8 @@ class ToolRegistry:
         if name in self._tools:
             tool = self._tools[name]
             try:
-                # 简化参数传递，直接传入字符串
-                return tool.run({"input": input_text})
+                # 直接传入字典参数
+                return tool.run(parameters)
             except Exception as e:
                 return f"错误：执行工具 '{name}' 时发生异常: {str(e)}"
 
