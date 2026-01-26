@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from ..tools.registry import ToolRegistry
 
 
-class SimpleAgent(Agent):
-    """简单的对话Agent，支持可选的工具调用"""
+class ReActAgent(Agent):
+    """ReAct Agent，支持可选的工具调用"""
 
     def __init__(
         self,
@@ -25,7 +25,7 @@ class SimpleAgent(Agent):
         tool_registry: Optional[ToolRegistry] = None,
     ):
         """
-        初始化SimpleAgent
+        初始化ReActAgent
 
         Args:
             name: Agent名称
@@ -118,7 +118,7 @@ class SimpleAgent(Agent):
 
     def run(self, user_input: str, max_tool_iterations: int = 5, **kwargs) -> str:
         """
-        运行SimpleAgent，支持可选的工具调用
+        运行ReActAgent，支持可选的工具调用
 
         Args:
             user_input: 用户输入
