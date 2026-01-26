@@ -132,7 +132,9 @@ class SimpleAgent(Agent):
         messages = []
 
         # 添加系统消息（可能包含工具信息）
-        messages.append({"role": "system", "content": self._get_enhanced_system_prompt()})
+        messages.append(
+            {"role": "system", "content": self._get_enhanced_system_prompt()}
+        )
 
         # 添加历史消息
         for msg in self._history:
