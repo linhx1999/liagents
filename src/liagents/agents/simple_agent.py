@@ -110,7 +110,7 @@ class SimpleAgent(Agent):
                 return f"错误：未找到工具 '{tool_name}'"
 
             # 调用工具
-            result = tool.run(**arguments)
+            result = tool.run(arguments)
             return f"工具 {tool_name} 执行结果：\n{result}"
 
         except Exception as e:
