@@ -11,7 +11,6 @@ class Message(BaseModel):
 
     content: str
     role: MessageRole
-    timestamp: datetime = None
     metadata: Optional[Dict[str, Any]] = None
 
     def __init__(self, role: MessageRole, content: str, **kwargs):
