@@ -169,8 +169,8 @@ class OpenAIFuncCallAgent(Agent):
         func = self.tool_registry.get_function(tool_name)
         if func:
             try:
-                input_text = arguments.get("input", "")
-                return func(input_text)
+                user_input = arguments.get("input", "")
+                return func(user_input)
             except Exception as exc:
                 return f"❌ 工具调用失败：{exc}"
 
@@ -197,7 +197,7 @@ class OpenAIFuncCallAgent(Agent):
 
     def run(
         self,
-        input_text: str,
+        user_input: str,
         *,
         max_tool_iterations: Optional[int] = None,
         tool_choice: Optional[Union[str, dict]] = None,
@@ -212,12 +212,12 @@ class OpenAIFuncCallAgent(Agent):
         for msg in self._history:
             messages.append({"role": msg.role, "content": msg.content})
 
-        messages.append({"role": "user", "content": input_text})
+        messages.append({"role": "user", "content": user_input})
 
         tool_schemas = self._build_tool_schemas()
         if not tool_schemas:
             response_text = self.llm.invoke(messages, **kwargs)
-            self.add_message(Message(input_text, "user"))
+            self.add_message(Message(user_input, "user"))
             self.add_message(Message(response_text, "assistant"))
             return response_text
 
@@ -287,7 +287,7 @@ class OpenAIFuncCallAgent(Agent):
             final_response = self._extract_message_content(final_choice.choices[0].message.content)
             messages.append({"role": "assistant", "content": final_response})
 
-        self.add_message(Message(input_text, "user"))
+        self.add_message(Message(user_input, "user"))
         self.add_message(Message(final_response, "assistant"))
         return final_response
 
@@ -324,7 +324,7 @@ class OpenAIFuncCallAgent(Agent):
     def has_tools(self) -> bool:
         return self.tool_registry is not None
 
-    def stream_run(self, input_text: str, **kwargs) -> Iterator[str]:
+    def stream_run(self, user_input: str, **kwargs) -> Iterator[str]:
         """流式调用暂未实现，直接回退到一次性调用"""
-        result = self.run(input_text, **kwargs)
+        result = self.run(user_input, **kwargs)
         yield result
