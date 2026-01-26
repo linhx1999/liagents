@@ -238,10 +238,10 @@ class SimpleAgent(Agent):
 
         # 流式调用LLM
         full_response = ""
-        for chunk in self.llm.stream_invoke(messages, **kwargs):
+        for chunk in self.client.stream_chat(messages, **kwargs):
             full_response += chunk
             yield chunk
 
         # 保存完整对话到历史记录
-        self.add_message(Message(user_input, "user"))
-        self.add_message(Message(full_response, "assistant"))
+        self.add_message(Message("user", user_input))
+        self.add_message(Message("assistant", full_response))
