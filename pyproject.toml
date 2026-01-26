@@ -7,8 +7,15 @@ authors = [
     { name = "linhx", email = "linhx1999@163.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "openai<2.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+]
