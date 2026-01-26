@@ -1,4 +1,4 @@
-from typing import Optional, Iterator, TYPE_CHECKING
+from typing import Any, Optional, Iterator, TYPE_CHECKING
 import re
 import json
 
@@ -65,7 +65,7 @@ class SimpleAgent(Agent):
 
         return base_prompt + tools_section
 
-    def _parse_tool_calls(self, text: str) -> list:
+    def _parse_tool_calls(self, text: str) -> list[dict[str, Any]]:
         """
         解析文本中的工具调用
 
@@ -77,7 +77,7 @@ class SimpleAgent(Agent):
 
         tool_calls = []
 
-        # 使用正则表达式匹配 <invoke> 标签内容
+        # 使用正则表达式匹配 tool_call 标签内容
         pattern = r"<tool_call>\s*\n?({.+?})\s*\n?</tool_call>"
         matches = re.findall(pattern, text, re.DOTALL)
 
@@ -88,42 +88,33 @@ class SimpleAgent(Agent):
             tool_name = call_data.get("name", "")
             arguments = call_data.get("arguments", {})
 
-            # 将 arguments 转换为字符串格式（保持与后续代码兼容）
-            if isinstance(arguments, dict):
-                parameters = json.dumps(arguments)
-            else:
-                parameters = str(arguments)
-
             tool_calls.append(
                 {
                     "tool_name": tool_name,
-                    "parameters": parameters,
-                    "original": f"<tool_call>\n{json_str}\n</tool_call>",
+                    "arguments": arguments,
+                    "original": json_str,
                 }
             )
 
         return tool_calls
 
-    def _execute_tool_call(self, tool_name: str, parameters: str) -> str:
+    def _execute_tool_call(self, tool_name: str, arguments: dict) -> str:
         """执行工具调用"""
         if not self.tool_registry:
-            return f"❌ 错误：未配置工具注册表"
+            return f"错误：未配置工具注册表"
 
         try:
             # 获取Tool对象
             tool = self.tool_registry.get_tool(tool_name)
             if not tool:
-                return f"❌ 错误：未找到工具 '{tool_name}'"
-
-            # 智能参数解析
-            param_dict = self._parse_tool_parameters(tool_name, parameters)
+                return f"错误：未找到工具 '{tool_name}'"
 
             # 调用工具
-            result = tool.run(param_dict)
-            return f"🔧 工具 {tool_name} 执行结果：\n{result}"
+            result = tool.run(**arguments)
+            return f"工具 {tool_name} 执行结果：\n{result}"
 
         except Exception as e:
-            return f"❌ 工具调用失败：{str(e)}"
+            return f"工具调用失败：{str(e)}"
 
     def _parse_tool_parameters(self, tool_name: str, parameters: str) -> dict:
         """智能解析工具参数"""
