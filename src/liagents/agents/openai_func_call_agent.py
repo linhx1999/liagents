@@ -122,7 +122,7 @@ class OpenAIFuncCallAgent(Agent):
     def _execute_tool_call(self, tool_name: str, arguments: dict[str, Any]) -> str:
         """执行工具调用并返回字符串结果"""
         if not self.tool_registry:
-            return "❌ 错误：未配置工具注册表"
+            return "错误：未配置工具注册表"
 
         tool = self.tool_registry.get_tool(tool_name)
         if tool:
@@ -130,17 +130,9 @@ class OpenAIFuncCallAgent(Agent):
                 typed_arguments = self._convert_parameter_types(tool_name, arguments)
                 return tool.run(typed_arguments)
             except Exception as exc:
-                return f"❌ 工具调用失败：{exc}"
+                return f"工具调用失败：{exc}"
 
-        func = self.tool_registry.get_function(tool_name)
-        if func:
-            try:
-                user_input = arguments.get("input", "")
-                return func(user_input)
-            except Exception as exc:
-                return f"❌ 工具调用失败：{exc}"
-
-        return f"❌ 错误：未找到工具 '{tool_name}'"
+        return f"错误：未找到工具 '{tool_name}'"
 
     def run(
         self,
