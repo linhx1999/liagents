@@ -65,7 +65,7 @@ class OpenAIFuncCallAgent(Agent):
             for param in parameters:
                 properties[param.name] = {
                     "type": _map_parameter_type(param.type),
-                    "description": param.description or ""
+                    "description": param.description or "",
                 }
                 if param.default is not None:
                     properties[param.name]["default"] = param.default
@@ -77,18 +77,14 @@ class OpenAIFuncCallAgent(Agent):
                 "function": {
                     "name": tool.name,
                     "description": tool.description or "",
-                    "parameters": {
-                        "type": "object",
-                        "properties": properties
-                    }
-                }
+                    "parameters": {"type": "object", "properties": properties},
+                },
             }
             if required:
                 schema["function"]["parameters"]["required"] = required
             schemas.append(schema)
 
         return schemas
-
 
     @staticmethod
     def _parse_function_call_arguments(arguments: Optional[str]) -> dict[str, Any]:
@@ -102,7 +98,9 @@ class OpenAIFuncCallAgent(Agent):
         except json.JSONDecodeError:
             return {}
 
-    def _convert_parameter_types(self, tool_name: str, param_dict: dict[str, Any]) -> dict[str, Any]:
+    def _convert_parameter_types(
+        self, tool_name: str, param_dict: dict[str, Any]
+    ) -> dict[str, Any]:
         """根据工具定义尽可能转换参数类型"""
         if not self.tool_registry:
             return param_dict
@@ -170,7 +168,13 @@ class OpenAIFuncCallAgent(Agent):
 
         return f"❌ 错误：未找到工具 '{tool_name}'"
 
-    def _invoke_with_tools(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]], tool_choice: Union[str, dict], **kwargs):
+    def _invoke_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]],
+        tool_choice: Union[str, dict],
+        **kwargs,
+    ):
         """调用底层OpenAI客户端执行函数调用"""
         client = getattr(self.llm, "_client", None)
         if client is None:
@@ -202,8 +206,14 @@ class OpenAIFuncCallAgent(Agent):
         """
         messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()
-        iterations_limit = max_tool_iterations if max_tool_iterations is not None else self.max_tool_iterations
-        effective_tool_choice: Union[str, dict] = tool_choice if tool_choice is not None else self.default_tool_choice
+        iterations_limit = (
+            max_tool_iterations
+            if max_tool_iterations is not None
+            else self.max_tool_iterations
+        )
+        effective_tool_choice: Union[str, dict] = (
+            tool_choice if tool_choice is not None else self.default_tool_choice
+        )
         current_iteration = 0
         final_response = ""
 
@@ -215,12 +225,17 @@ class OpenAIFuncCallAgent(Agent):
                 **kwargs,
             )
 
-            assistant_message = response.choices[0].message or {"role": "assistant", "content": ""}
+            assistant_message = response.choices[0].message or {
+                "role": "assistant",
+                "content": "",
+            }
             tool_calls = list(assistant_message.tool_calls or [])
 
             for tool_call in tool_calls:
                 tool_name = tool_call.function.name
-                arguments = self._parse_function_call_arguments(tool_call.function.arguments)
+                arguments = self._parse_function_call_arguments(
+                    tool_call.function.arguments
+                )
                 result = self._execute_tool_call(tool_name, arguments)
                 messages.append(
                     {
@@ -232,7 +247,7 @@ class OpenAIFuncCallAgent(Agent):
 
                 current_iteration += 1
                 continue
-            
+
             final_response = assistant_message.content
             messages.append({"role": "assistant", "content": final_response})
             break
@@ -293,8 +308,14 @@ class OpenAIFuncCallAgent(Agent):
         """
         messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()
-        iterations_limit = max_tool_iterations if max_tool_iterations is not None else self.max_tool_iterations
-        effective_tool_choice: Union[str, dict] = tool_choice if tool_choice is not None else self.default_tool_choice
+        iterations_limit = (
+            max_tool_iterations
+            if max_tool_iterations is not None
+            else self.max_tool_iterations
+        )
+        effective_tool_choice: Union[str, dict] = (
+            tool_choice if tool_choice is not None else self.default_tool_choice
+        )
         current_iteration = 0
         final_response = ""
 
@@ -317,14 +338,19 @@ class OpenAIFuncCallAgent(Agent):
                 **kwargs,
             )
 
-            assistant_message = response.choices[0].message or {"role": "assistant", "content": ""}
+            assistant_message = response.choices[0].message or {
+                "role": "assistant",
+                "content": "",
+            }
             tool_calls = list(assistant_message.tool_calls or [])
 
             if tool_calls:
                 # 有工具调用，执行工具并继续
                 for tool_call in tool_calls:
                     tool_name = tool_call.function.name
-                    arguments = self._parse_function_call_arguments(tool_call.function.arguments)
+                    arguments = self._parse_function_call_arguments(
+                        tool_call.function.arguments
+                    )
                     result = self._execute_tool_call(tool_name, arguments)
                     messages.append(
                         {
