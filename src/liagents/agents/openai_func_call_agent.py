@@ -208,7 +208,7 @@ class OpenAIFuncCallAgent(Agent):
         final_response = ""
 
         while current_iteration < iterations_limit:
-            response = self.client.invoke_chat(
+            response = self.client.chat_with_tools(
                 messages,
                 tools=tool_schemas,
                 tool_choice=effective_tool_choice,
@@ -238,7 +238,7 @@ class OpenAIFuncCallAgent(Agent):
             break
 
         if current_iteration >= iterations_limit and not final_response:
-            final_choice = self.client.invoke_chat(
+            final_choice = self.client.chat_with_tools(
                 messages,
                 tools=tool_schemas,
                 tool_choice="none",

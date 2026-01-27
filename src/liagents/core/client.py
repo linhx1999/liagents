@@ -102,3 +102,39 @@ class Client:
             return response.choices[0].message.content
         except Exception as e:
             raise RuntimeError(f"调用LLM API时发生错误: {e}")
+
+    def chat_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: Optional[list[dict[str, Any]]] = None,
+        tool_choice: Union[str, dict] = "auto",
+        **kwargs,
+    ) -> Any:
+        """
+        支持函数调用的聊天方法，返回完整响应对象
+
+        Args:
+            messages: 消息列表
+            tools: 工具schemas（OpenAI函数调用格式）
+            tool_choice: 工具选择策略 ("auto", "none", 或具体工具)
+            **kwargs: 其他参数
+
+        Returns:
+            完整的OpenAI响应对象
+        """
+        try:
+            response = self._client.chat.completions.create(
+                messages=messages,
+                model=kwargs.pop("model", self._model),
+                temperature=kwargs.pop("temperature", self._temperature),
+                max_completion_tokens=kwargs.pop(
+                    "max_completion_tokens", self._max_completion_tokens
+                ),
+                tools=tools,
+                tool_choice=tool_choice,
+                stream=False,
+                **kwargs,
+            )
+            return response
+        except Exception as e:
+            raise RuntimeError(f"调用LLM API时发生错误: {e}")
