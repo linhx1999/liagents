@@ -35,6 +35,17 @@ class OpenAIFuncCallAgent(Agent):
         self.default_tool_choice = default_tool_choice
         self.max_tool_iterations = max_tool_iterations
 
+    def _build_messages(self, user_input: str) -> list[dict[str, Any]]:
+        """构建初始消息列表"""
+        messages: list[dict[str, Any]] = []
+        messages.append({"role": "system", "content": self.system_prompt})
+
+        for msg in self._history:
+            messages.append({"role": msg.role, "content": msg.content})
+
+        messages.append({"role": "user", "content": user_input})
+        return messages
+
     def _build_tool_schemas(self) -> list[dict[str, Any]]:
         if not self.tool_registry:
             return []
@@ -189,14 +200,7 @@ class OpenAIFuncCallAgent(Agent):
         """
         执行函数调用范式的对话流程
         """
-        messages: list[dict[str, Any]] = []
-        messages.append({"role": "system", "content": self.system_prompt})
-
-        for msg in self._history:
-            messages.append({"role": msg.role, "content": msg.content})
-
-        messages.append({"role": "user", "content": user_input})
-
+        messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()
         iterations_limit = max_tool_iterations if max_tool_iterations is not None else self.max_tool_iterations
         effective_tool_choice: Union[str, dict] = tool_choice if tool_choice is not None else self.default_tool_choice
@@ -287,14 +291,7 @@ class OpenAIFuncCallAgent(Agent):
         Yields:
             Agent响应片段
         """
-        messages: list[dict[str, Any]] = []
-        messages.append({"role": "system", "content": self.system_prompt})
-
-        for msg in self._history:
-            messages.append({"role": msg.role, "content": msg.content})
-
-        messages.append({"role": "user", "content": user_input})
-
+        messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()
         iterations_limit = max_tool_iterations if max_tool_iterations is not None else self.max_tool_iterations
         effective_tool_choice: Union[str, dict] = tool_choice if tool_choice is not None else self.default_tool_choice
