@@ -55,34 +55,7 @@ class OpenAIFuncCallAgent(Agent):
 
         # Tool对象
         for tool in self.tool_registry.get_all_tools():
-            properties: Dict[str, Any] = {}
-            required: list[str] = []
-
-            try:
-                parameters = tool.get_parameters()
-            except Exception:
-                parameters = []
-
-            for param in parameters:
-                properties[param.name] = {
-                    "type": _map_parameter_type(param.type),
-                    "description": param.description or "",
-                }
-                if param.default is not None:
-                    properties[param.name]["default"] = param.default
-                if getattr(param, "required", True):
-                    required.append(param.name)
-
-            schema: dict[str, Any] = {
-                "type": "function",
-                "function": {
-                    "name": tool.name,
-                    "description": tool.description or "",
-                    "parameters": {"type": "object", "properties": properties},
-                },
-            }
-            if required:
-                schema["function"]["parameters"]["required"] = required
+            schema = tool.to_schema()
             schemas.append(schema)
 
         return schemas
