@@ -2,6 +2,7 @@ import os
 from openai import OpenAI
 from typing import List, Dict, Optional, Iterator, Union, Any, Generator
 from collections import defaultdict
+from openai.types.chat.chat_completion import ChatCompletion
 
 
 class Client:
@@ -194,7 +195,7 @@ class Client:
         tools: Optional[list[dict[str, Any]]] = None,
         tool_choice: Union[str, dict] = "auto",
         **kwargs,
-    ) -> Any:
+    ) -> ChatCompletion:
         """
         支持函数调用的聊天方法，返回完整响应对象
 
