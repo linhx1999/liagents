@@ -29,7 +29,7 @@ class OpenAIFuncCallAgent(Agent):
         default_tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 10,
     ):
-        super().__init__(name, client, system_prompt, config)
+        super().__init__(name, client, system_prompt.strip(), config)
         self.tool_registry = tool_registry or ToolRegistry()
         self._history: list[Message] = []
         self.default_tool_choice = default_tool_choice
@@ -247,21 +247,8 @@ class OpenAIFuncCallAgent(Agent):
         self.add_message(Message("assistant", final_response))
         return final_response
 
-    def add_tool(self, tool) -> None:
+    def add_tool(self, tool: Tool) -> None:
         """便捷方法：将工具注册到当前Agent"""
-        if not self.tool_registry:
-            from ..tools.registry import ToolRegistry
-
-            self.tool_registry = ToolRegistry()
-
-        if hasattr(tool, "auto_expand") and getattr(tool, "auto_expand"):
-            expanded_tools = tool.get_expanded_tools()
-            if expanded_tools:
-                for expanded_tool in expanded_tools:
-                    self.tool_registry.register_tool(expanded_tool)
-                print(f"✅ MCP工具 '{tool.name}' 已展开为 {len(expanded_tools)} 个独立工具")
-                return
-
         self.tool_registry.register_tool(tool)
 
     def remove_tool(self, tool_name: str) -> bool:
