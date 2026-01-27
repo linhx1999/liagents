@@ -134,7 +134,6 @@ class OpenAIFuncCallAgent(Agent):
         except Exception as exc:
             return f"工具调用失败：{exc}"
 
-
     def run(
         self,
         user_input: str,

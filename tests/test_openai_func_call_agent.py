@@ -5,7 +5,10 @@ from unittest.mock import Mock
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat import ChatCompletionMessage
 
-from liagents.agents.openai_func_call_agent import OpenAIFuncCallAgent, _map_parameter_type
+from liagents.agents.openai_func_call_agent import (
+    OpenAIFuncCallAgent,
+    _map_parameter_type,
+)
 from liagents.core.client import Client
 from liagents.core.config import Config
 from liagents.core.message import Message
@@ -429,9 +432,7 @@ class TestConvertParameterTypes:
         """测试字符串转浮点数"""
         # 修改工具参数为 number 类型
         mock_tool.get_parameters = Mock(
-            return_value=[
-                ToolParameter(name="num", type="number", description="数字")
-            ]
+            return_value=[ToolParameter(name="num", type="number", description="数字")]
         )
 
         result = func_call_agent_with_tools._convert_parameter_types(
@@ -444,15 +445,13 @@ class TestConvertParameterTypes:
     def test_convert_string_to_boolean(self, func_call_agent_with_tools, mock_tool):
         """测试字符串转布尔值"""
         mock_tool.get_parameters = Mock(
-            return_value=[
-                ToolParameter(name="flag", type="boolean", description="标志")
-            ]
+            return_value=[ToolParameter(name="flag", type="boolean", description="标志")]
         )
 
         assert (
-            func_call_agent_with_tools._convert_parameter_types("test_tool", {"flag": "true"})[
-                "flag"
-            ]
+            func_call_agent_with_tools._convert_parameter_types(
+                "test_tool", {"flag": "true"}
+            )["flag"]
             is True
         )
         assert (
@@ -462,9 +461,9 @@ class TestConvertParameterTypes:
             is False
         )
         assert (
-            func_call_agent_with_tools._convert_parameter_types("test_tool", {"flag": "1"})[
-                "flag"
-            ]
+            func_call_agent_with_tools._convert_parameter_types(
+                "test_tool", {"flag": "1"}
+            )["flag"]
             is True
         )
 
@@ -558,9 +557,7 @@ class TestRun:
             role="assistant",
             content="工具执行完成,这是最终答案",
         )
-        final_choice = Choice(
-            index=0, message=final_message, finish_reason="stop"
-        )
+        final_choice = Choice(index=0, message=final_message, finish_reason="stop")
         final_completion = ChatCompletion(
             id="test-id-final",
             created=1234567891,
@@ -587,12 +584,8 @@ class TestRun:
     ):
         """测试覆盖最大工具迭代次数"""
         # 创建一个有 content 的最终响应
-        final_message = ChatCompletionMessage(
-            role="assistant", content="最终答案"
-        )
-        final_choice = Choice(
-            index=0, message=final_message, finish_reason="stop"
-        )
+        final_message = ChatCompletionMessage(role="assistant", content="最终答案")
+        final_choice = Choice(index=0, message=final_message, finish_reason="stop")
         final_completion = ChatCompletion(
             id="test-id",
             created=1234567890,
@@ -778,9 +771,7 @@ class TestEdgeCases:
 
         assert response is not None
 
-    def test_convert_parameter_with_invalid_value(
-        self, func_call_agent_with_tools
-    ):
+    def test_convert_parameter_with_invalid_value(self, func_call_agent_with_tools):
         """测试转换无效参数值"""
         # 当转换失败时，应该保留原值
         result = func_call_agent_with_tools._convert_parameter_types(
@@ -823,12 +814,8 @@ class TestEdgeCases:
         """测试最大迭代次数为 0"""
         # 当 max_tool_iterations=0 时，while 循环不会执行
         # 但由于 final_response 为空字符串，会调用 tool_choice="none" 获取最终答案
-        final_message = ChatCompletionMessage(
-            role="assistant", content="最终答案"
-        )
-        final_choice = Choice(
-            index=0, message=final_message, finish_reason="stop"
-        )
+        final_message = ChatCompletionMessage(role="assistant", content="最终答案")
+        final_choice = Choice(index=0, message=final_message, finish_reason="stop")
         final_completion = ChatCompletion(
             id="test-id",
             created=1234567890,
