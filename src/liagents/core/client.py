@@ -83,33 +83,21 @@ class Client:
         except Exception as e:
             raise RuntimeError(f"调用LLM API时发生错误: {e}")
 
-    def invoke_chat(
+    def chat(
         self,
         messages: list[dict[str, str]],
-        tools: Optional[list[dict[str, Any]]] = None,
-        tool_choice: Union[str, dict] = "auto",
         **kwargs,
     ) -> str:
-        """
-        非流式调用，返回完整响应。
-        适用于不需要流式输出的场景。
-        """
         try:
             response = self._client.chat.completions.create(
-                model=self._model,
                 messages=messages,
-                temperature=kwargs.get("temperature", self._temperature),
-                tools=tools,
-                tool_choice=tool_choice,
-                max_completion_tokens=kwargs.get(
+                model=kwargs.pop("model", self._model),
+                temperature=kwargs.pop("temperature", self._temperature),
+                max_completion_tokens=kwargs.pop(
                     "max_completion_tokens", self._max_completion_tokens
                 ),
                 stream=False,
-                **{
-                    k: v
-                    for k, v in kwargs.items()
-                    if k not in ["temperature", "max_completion_tokens", "stream"]
-                },
+                **kwargs,
             )
             return response.choices[0].message.content
         except Exception as e:
