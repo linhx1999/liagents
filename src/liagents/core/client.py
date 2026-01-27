@@ -33,19 +33,13 @@ class Client:
     def stream_chat(
         self,
         messages: List[Dict[str, str]],
-        temperature: Optional[float] = None,
-        tools: Optional[list[dict[str, Any]]] = None,
-        tool_choice: Union[str, dict] = "auto",
         **kwargs,
     ) -> Iterator[str]:
         """
-        流式调用，支持工具调用
+        基础流式调用
 
         Args:
             messages: 消息列表
-            temperature: 温度参数
-            tools: 工具schemas（OpenAI函数调用格式）
-            tool_choice: 工具选择策略
             **kwargs: 其他参数
 
         Returns:
@@ -53,23 +47,64 @@ class Client:
         """
         print(f"正在调用 {self._model} 模型...")
         try:
-            request_params = {
-                "model": self._model,
+            response = self._client.chat.completions.create(
+                messages=messages,
+                model=kwargs.pop("model", self._model),
+                temperature=kwargs.pop("temperature", self._temperature),
+                max_completion_tokens=kwargs.pop(
+                    "max_completion_tokens", self._max_completion_tokens
+                ),
+                stream=True,
+                **kwargs,
+            )
+
+            # 处理流式响应
+            print("大语言模型响应成功:")
+            for chunk in response:
+                content = chunk.choices[0].delta.content or ""
+                if content:
+                    print(content, end="", flush=True)
+                    yield content
+            print()  # 在流式输出结束后换行
+
+        except Exception as e:
+            raise RuntimeError(f"调用LLM API时发生错误: {e}")
+
+    def stream_chat_with_tools(
+        self,
+        messages: list[dict[str, Any]],
+        tools: Optional[list[dict[str, Any]]] = None,
+        tool_choice: Union[str, dict] = "auto",
+        **kwargs,
+    ) -> Iterator[str]:
+        """
+        支持工具调用的流式方法
+
+        Args:
+            messages: 消息列表
+            tools: 工具schemas（OpenAI函数调用格式）
+            tool_choice: 工具选择策略 ("auto", "none", 或具体工具)
+            **kwargs: 其他参数
+
+        Returns:
+            流式响应迭代器
+        """
+        print(f"正在调用 {self._model} 模型...")
+        try:
+            create_params = {
                 "messages": messages,
-                "temperature": temperature or self._temperature,
-                "max_completion_tokens": self._max_completion_tokens,
+                "model": kwargs.pop("model", self._model),
+                "temperature": kwargs.pop("temperature", self._temperature),
+                "max_completion_tokens": kwargs.pop(
+                    "max_completion_tokens", self._max_completion_tokens
+                ),
                 "stream": True,
+                "tools": tools,
+                "tool_choice": tool_choice,
+                **kwargs,
             }
 
-            # 添加工具调用支持
-            if tools:
-                request_params["tools"] = tools
-                request_params["tool_choice"] = tool_choice
-
-            # 添加其他参数
-            request_params.update(kwargs)
-
-            response = self._client.chat.completions.create(**request_params)
+            response = self._client.chat.completions.create(**create_params)
 
             # 处理流式响应
             print("大语言模型响应成功:")
