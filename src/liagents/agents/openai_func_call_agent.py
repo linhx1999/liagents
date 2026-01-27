@@ -187,10 +187,13 @@ class OpenAIFuncCallAgent(Agent):
                     }
                 )
 
+            # 如果有工具调用，继续下一次迭代进行 API 调用
+            if tool_calls:
                 current_iteration += 1
                 continue
 
-            final_response = assistant_message.content
+            # 没有工具调用时，使用 assistant 的 content 作为最终响应
+            final_response = assistant_message.content or ""
             messages.append({"role": "assistant", "content": final_response})
             break
 
@@ -201,7 +204,7 @@ class OpenAIFuncCallAgent(Agent):
                 tool_choice="none",
                 **kwargs,
             )
-            final_response = final_choice.choices[0].message.content
+            final_response = final_choice.choices[0].message.content or ""
             messages.append({"role": "assistant", "content": final_response})
 
         self.add_message(Message("user", user_input))
