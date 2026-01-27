@@ -267,7 +267,99 @@ class OpenAIFuncCallAgent(Agent):
     def has_tools(self) -> bool:
         return self.tool_registry is not None
 
-    def stream_run(self, user_input: str, **kwargs) -> Iterator[str]:
-        """流式调用暂未实现，直接回退到一次性调用"""
-        result = self.run(user_input, **kwargs)
-        yield result
+    def stream_run(
+        self,
+        user_input: str,
+        *,
+        max_tool_iterations: Optional[int] = None,
+        tool_choice: Optional[Union[str, dict]] = None,
+        **kwargs,
+    ) -> Iterator[str]:
+        """
+        流式运行Agent，支持工具调用
+
+        Args:
+            user_input: 用户输入
+            max_tool_iterations: 最大工具调用迭代次数
+            tool_choice: 工具选择策略
+            **kwargs: 其他参数
+
+        Yields:
+            Agent响应片段
+        """
+        messages: list[dict[str, Any]] = []
+        messages.append({"role": "system", "content": self.system_prompt})
+
+        for msg in self._history:
+            messages.append({"role": msg.role, "content": msg.content})
+
+        messages.append({"role": "user", "content": user_input})
+
+        tool_schemas = self._build_tool_schemas()
+        iterations_limit = max_tool_iterations if max_tool_iterations is not None else self.max_tool_iterations
+        effective_tool_choice: Union[str, dict] = tool_choice if tool_choice is not None else self.default_tool_choice
+        current_iteration = 0
+        final_response = ""
+
+        # 如果没有工具，使用简单的流式调用
+        if not tool_schemas:
+            for chunk in self.client.stream_chat(messages, **kwargs):
+                final_response += chunk
+                yield chunk
+
+            self.add_message(Message("user", user_input))
+            self.add_message(Message("assistant", final_response))
+            return
+
+        # 有工具时，使用迭代式调用（类似run方法）
+        while current_iteration < iterations_limit:
+            response = self.client.invoke_chat(
+                messages,
+                tools=tool_schemas,
+                tool_choice=effective_tool_choice,
+                **kwargs,
+            )
+
+            assistant_message = response.choices[0].message or {"role": "assistant", "content": ""}
+            tool_calls = list(assistant_message.tool_calls or [])
+
+            if tool_calls:
+                # 有工具调用，执行工具并继续
+                for tool_call in tool_calls:
+                    tool_name = tool_call.function.name
+                    arguments = self._parse_function_call_arguments(tool_call.function.arguments)
+                    result = self._execute_tool_call(tool_name, arguments)
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": result,
+                        }
+                    )
+
+                    current_iteration += 1
+                continue
+
+            # 没有工具调用，流式输出最终响应
+            final_response = assistant_message.content or ""
+            messages.append({"role": "assistant", "content": final_response})
+            break
+
+        # 如果超过最大迭代次数，获取最后一次回答
+        if current_iteration >= iterations_limit and not final_response:
+            final_choice = self.client.invoke_chat(
+                messages,
+                tools=tool_schemas,
+                tool_choice="none",
+                **kwargs,
+            )
+            final_response = final_choice.choices[0].message.content or ""
+            messages.append({"role": "assistant", "content": final_response})
+
+        # 保存到历史记录
+        self.add_message(Message("user", user_input))
+        self.add_message(Message("assistant", final_response))
+
+        # 流式输出最终响应
+        for chunk in final_response:
+            yield chunk

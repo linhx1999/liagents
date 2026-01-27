@@ -1,6 +1,6 @@
 import os
 from openai import OpenAI
-from typing import List, Dict, Optional, Iterator
+from typing import List, Dict, Optional, Iterator, Union, Any
 
 
 class Client:
@@ -31,17 +31,45 @@ class Client:
         self._client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
 
     def stream_chat(
-        self, messages: List[Dict[str, str]], temperature: Optional[float] = None
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
+        tools: Optional[list[dict[str, Any]]] = None,
+        tool_choice: Union[str, dict] = "auto",
+        **kwargs,
     ) -> Iterator[str]:
+        """
+        流式调用，支持工具调用
+
+        Args:
+            messages: 消息列表
+            temperature: 温度参数
+            tools: 工具schemas（OpenAI函数调用格式）
+            tool_choice: 工具选择策略
+            **kwargs: 其他参数
+
+        Returns:
+            流式响应迭代器
+        """
         print(f"正在调用 {self._model} 模型...")
         try:
-            response = self._client.chat.completions.create(
-                model=self._model,
-                messages=messages,
-                temperature=temperature or self._temperature,
-                max_completion_tokens=self._max_completion_tokens,
-                stream=True,
-            )
+            request_params = {
+                "model": self._model,
+                "messages": messages,
+                "temperature": temperature or self._temperature,
+                "max_completion_tokens": self._max_completion_tokens,
+                "stream": True,
+            }
+
+            # 添加工具调用支持
+            if tools:
+                request_params["tools"] = tools
+                request_params["tool_choice"] = tool_choice
+
+            # 添加其他参数
+            request_params.update(kwargs)
+
+            response = self._client.chat.completions.create(**request_params)
 
             # 处理流式响应
             print("大语言模型响应成功:")
@@ -55,7 +83,13 @@ class Client:
         except Exception as e:
             raise RuntimeError(f"调用LLM API时发生错误: {e}")
 
-    def invoke_chat(self, messages: list[dict[str, str]], **kwargs) -> str:
+    def invoke_chat(
+        self,
+        messages: list[dict[str, str]],
+        tools: Optional[list[dict[str, Any]]] = None,
+        tool_choice: Union[str, dict] = "auto",
+        **kwargs,
+    ) -> str:
         """
         非流式调用，返回完整响应。
         适用于不需要流式输出的场景。
@@ -65,6 +99,8 @@ class Client:
                 model=self._model,
                 messages=messages,
                 temperature=kwargs.get("temperature", self._temperature),
+                tools=tools,
+                tool_choice=tool_choice,
                 max_completion_tokens=kwargs.get(
                     "max_completion_tokens", self._max_completion_tokens
                 ),
