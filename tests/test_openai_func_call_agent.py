@@ -41,12 +41,8 @@ def mock_tool():
     tool.run = Mock(return_value="工具执行成功")
     tool.get_parameters = Mock(
         return_value=[
-            ToolParameter(
-                name="param1", type="string", description="参数1", required=True
-            ),
-            ToolParameter(
-                name="param2", type="integer", description="参数2", required=False
-            ),
+            ToolParameter(name="param1", type="string", description="参数1", required=True),
+            ToolParameter(name="param2", type="integer", description="参数2", required=False),
         ]
     )
     # 让 to_schema 返回真实的 schema 字典
@@ -432,7 +428,7 @@ class TestConvertParameterTypes:
         """测试字符串转浮点数"""
         # 修改工具参数为 number 类型
         mock_tool.get_parameters = Mock(
-            return_value=[ToolParameter(name="num", type="number", description="数字")]
+            return_value=[ToolParameter(name="num", type="number", description="数字", required=True)]
         )
 
         result = func_call_agent_with_tools._convert_parameter_types(
@@ -445,7 +441,7 @@ class TestConvertParameterTypes:
     def test_convert_string_to_boolean(self, func_call_agent_with_tools, mock_tool):
         """测试字符串转布尔值"""
         mock_tool.get_parameters = Mock(
-            return_value=[ToolParameter(name="flag", type="boolean", description="标志")]
+            return_value=[ToolParameter(name="flag", type="boolean", description="标志", required=True)]
         )
 
         assert (
@@ -790,21 +786,22 @@ class TestEdgeCases:
         # 创建一个会抛出异常的工具
         from liagents.tools.base import Tool as ToolClass
 
-        class BrokenTool(ToolClass):
-            def run(self, parameters):
-                return "test"
+        def broken_func(param: str) -> str:
+            return "test"
 
+        class BrokenTool(ToolClass):
             def get_parameters(self):
                 raise Exception("参数获取失败")
 
-            def to_schema(self):
-                # to_schema 会调用 get_parameters，会抛出异常
-                return super().to_schema()
+        broken_tool = BrokenTool(
+            func=broken_func,
+            name="broken",
+            description="破损工具",
+            parameters=[]  # 传入空列表，实际会通过 get_parameters 抛出异常
+        )
 
-        broken_tool = BrokenTool("broken", "破损工具")
-
-        # 由于 to_schema 会抛出异常，这个测试验证代码不会崩溃
-        # 实际上 to_schema 会调用 get_parameters，所以会抛出异常
+        # 由于 get_parameters 会抛出异常，这个测试验证代码不会崩溃
+        # to_schema 会调用 get_parameters，所以会抛出异常
         with pytest.raises(Exception, match="参数获取失败"):
             broken_tool.to_schema()
 

@@ -1,7 +1,7 @@
 """测试 CalculatorTool"""
 
 import pytest
-from liagents.tools.builtin.calculator import CalculatorTool
+from liagents.tools.builtin.calculator import python_calculator
 
 
 # ========== Fixtures ==========
@@ -9,8 +9,8 @@ from liagents.tools.builtin.calculator import CalculatorTool
 
 @pytest.fixture
 def calculator():
-    """创建 CalculatorTool 实例"""
-    return CalculatorTool()
+    """获取计算器工具实例"""
+    return python_calculator
 
 
 # ========== 初始化测试 ==========
@@ -33,7 +33,7 @@ class TestCalculatorToolInit:
         assert params[0].name == "expression"
         assert params[0].type == "string"
         assert params[0].required is True
-        assert "数学表达式" in params[0].description
+        assert "expression" in params[0].description
 
 
 # ========== 基本运算测试 ==========
@@ -204,8 +204,8 @@ class TestErrorHandling:
     def test_missing_expression(self, calculator):
         """测试缺少表达式参数"""
         result = calculator.run({})
-        assert "错误" in result
-        assert "不能为空" in result
+        # 新的工具系统会返回参数缺失错误
+        assert "错误" in result or "missing" in result.lower()
 
     def test_invalid_function(self, calculator):
         """测试无效函数"""
@@ -270,12 +270,12 @@ class TestConversionMethods:
 
     def test_to_dict(self, calculator):
         """测试转换为字典"""
-        # 注意：Tool 基类的 to_dict 需要 type 属性，但基类未定义
-        # 这里跳过该测试，或待基类修复后再测试
-        with pytest.raises(
-            AttributeError, match="'CalculatorTool' object has no attribute 'type'"
-        ):
-            calculator.to_dict()
+        result = calculator.to_dict()
+
+        assert result["name"] == "python_calculator"
+        assert "description" in result
+        assert "parameters" in result
+        assert isinstance(result["parameters"], list)
 
     def test_to_schema(self, calculator):
         """测试转换为 OpenAI function calling schema"""
