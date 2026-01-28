@@ -17,7 +17,7 @@ from liagents.tools.base import Tool
 def mock_client():
     """创建 Mock Client 实例"""
     client = Mock(spec=Client)
-    client.invoke_chat = Mock(return_value="测试响应")
+    client.chat = Mock(return_value="测试响应")
     return client
 
 
@@ -288,7 +288,7 @@ class TestRun:
 
     def test_run_without_tools(self, react_agent):
         """测试不带工具的运行"""
-        react_agent.client.invoke_chat = Mock(return_value="你好！有什么可以帮助你的吗？")
+        react_agent.client.chat = Mock(return_value="你好！有什么可以帮助你的吗？")
 
         response = react_agent.run("你好")
 
@@ -300,7 +300,7 @@ class TestRun:
     def test_run_with_tool_call(self, react_agent_with_tools, mock_tool):
         """测试带工具调用的运行"""
         # 第一次返回工具调用，第二次返回最终答案
-        react_agent_with_tools.client.invoke_chat = Mock(
+        react_agent_with_tools.client.chat = Mock(
             side_effect=[
                 '<tool_call>\n{"name": "test_tool", "arguments": {"param": "value"}}\n</tool_call>',
                 "工具执行完成，结果是：成功",
@@ -310,44 +310,44 @@ class TestRun:
         response = react_agent_with_tools.run("执行测试工具")
 
         assert response == "工具执行完成，结果是：成功"
-        assert react_agent_with_tools.client.invoke_chat.call_count == 2
+        assert react_agent_with_tools.client.chat.call_count == 2
         mock_tool.run.assert_called_once()
 
     def test_run_with_max_iterations_reached(self, react_agent_with_tools):
         """测试达到最大迭代次数"""
         # 持续返回工具调用
-        react_agent_with_tools.client.invoke_chat = Mock(
+        react_agent_with_tools.client.chat = Mock(
             return_value='<tool_call>\n{"name": "test_tool", "arguments": {}}\n</tool_call>'
         )
 
         _ = react_agent_with_tools.run("执行测试", max_tool_iterations=2)
 
         # 应该在最后一次获取最终答案
-        assert react_agent_with_tools.client.invoke_chat.call_count == 3
+        assert react_agent_with_tools.client.chat.call_count == 3
 
     def test_run_with_history(self, react_agent):
         """测试带历史记录的运行"""
         react_agent._history.append(Message("user", "之前的消息"))
         react_agent._history.append(Message("assistant", "之前的回复"))
 
-        react_agent.client.invoke_chat = Mock(return_value="新的回复")
+        react_agent.client.chat = Mock(return_value="新的回复")
 
         response = react_agent.run("新消息")
 
         # 检查是否传递了历史消息
-        call_args = react_agent.client.invoke_chat.call_args[0][0]
+        call_args = react_agent.client.chat.call_args[0][0]
         assert len(call_args) == 4  # system + 2 history + 1 new user
         assert response == "新的回复"
 
     def test_run_passes_kwargs(self, react_agent):
         """测试传递额外参数"""
-        react_agent.client.invoke_chat = Mock(return_value="响应")
+        react_agent.client.chat = Mock(return_value="响应")
 
         react_agent.run("测试", temperature=0.5, max_tokens=100)
 
         # 检查是否传递了额外参数
-        react_agent.client.invoke_chat.assert_called_once()
-        call_kwargs = react_agent.client.invoke_chat.call_args[1]
+        react_agent.client.chat.assert_called_once()
+        call_kwargs = react_agent.client.chat.call_args[1]
         assert "temperature" in call_kwargs
         assert call_kwargs["temperature"] == 0.5
 
@@ -477,7 +477,7 @@ class TestEdgeCases:
 
     def test_run_with_empty_input(self, react_agent):
         """测试空输入"""
-        react_agent.client.invoke_chat = Mock(return_value="")
+        react_agent.client.chat = Mock(return_value="")
 
         response = react_agent.run("")
 
@@ -493,7 +493,7 @@ class TestEdgeCases:
 
     def test_run_with_special_characters_in_arguments(self, react_agent_with_tools):
         """测试参数中包含特殊字符"""
-        react_agent_with_tools.client.invoke_chat = Mock(
+        react_agent_with_tools.client.chat = Mock(
             return_value='{"name": "test_tool", "arguments": {"text": "Hello\\nWorld\\t!"}}'
         )
 
