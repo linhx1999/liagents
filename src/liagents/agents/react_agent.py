@@ -18,8 +18,8 @@ class ReActAgent(Agent):
 
     def __init__(
         self,
-        name: str,
-        client: Client,
+        name: str = "ReActAgent",
+        client: Client = None,
         system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: Optional[ToolRegistry] = None,
@@ -186,7 +186,7 @@ class ReActAgent(Agent):
 
         # 如果超过最大迭代次数，获取最后一次回答
         if current_iteration >= max_tool_iterations and not final_response:
-            final_response = self.client.invoke_chat(messages, **kwargs)
+            final_response = self.client.chat(messages, **kwargs)
 
         # 保存到历史记录
         self.add_message(Message("user", user_input))
