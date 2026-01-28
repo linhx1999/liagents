@@ -42,9 +42,7 @@ def _eval_node(node):
     if isinstance(node, ast.Constant):  # Python 3.8+
         return node.value
     elif isinstance(node, ast.BinOp):
-        return OPERATORS[type(node.op)](
-            _eval_node(node.left), _eval_node(node.right)
-        )
+        return OPERATORS[type(node.op)](_eval_node(node.left), _eval_node(node.right))
     elif isinstance(node, ast.UnaryOp):
         return OPERATORS[type(node.op)](_eval_node(node.operand))
     elif isinstance(node, ast.Call):

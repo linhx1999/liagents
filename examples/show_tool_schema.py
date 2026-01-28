@@ -25,11 +25,9 @@ def main():
     print("如果使用 OpenAI 原生 function calling，请求格式如下：")
     request_example = {
         "model": "gpt-4",
-        "messages": [
-            {"role": "user", "content": "帮我计算 sqrt(16) + 2 * 3"}
-        ],
+        "messages": [{"role": "user", "content": "帮我计算 sqrt(16) + 2 * 3"}],
         "tools": [schema["function"]],  # 注意：取 schema 中的 function 部分
-        "tool_choice": "auto"
+        "tool_choice": "auto",
     }
     print(json.dumps(request_example, indent=2, ensure_ascii=False))
 

@@ -45,7 +45,11 @@ class Tool:
 
     def run(self, parameters: Dict[str, Any]) -> str:
         """执行工具并返回结果字符串"""
-        kwargs = {p.name: parameters[p.name] for p in self.get_parameters() if p.name in parameters}
+        kwargs = {
+            p.name: parameters[p.name]
+            for p in self.get_parameters()
+            if p.name in parameters
+        }
         try:
             result = self.func(**kwargs)
             return result if isinstance(result, str) else str(result)
@@ -127,6 +131,7 @@ def tool(func: Callable) -> Tool:
         ...     \"\"\"搜索工具\"\"\"
         ...     return f"搜索 {query}，返回 {limit} 条结果"
     """
+
     def _infer_type_string(type_annotation: Any) -> str:
         """将 Python 类型注解转换为 JSON Schema 类型字符串"""
         if type_annotation == int:
