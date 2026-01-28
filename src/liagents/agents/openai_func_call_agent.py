@@ -22,8 +22,8 @@ class OpenAIFuncCallAgent(Agent):
 
     def __init__(
         self,
-        name: str,
-        client: Client,
+        name: str = "OpenAIFuncCallAgent",
+        client: Client = None,
         system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: Optional["ToolRegistry"] = None,
@@ -172,6 +172,27 @@ class OpenAIFuncCallAgent(Agent):
             }
             tool_calls = list(assistant_message.tool_calls or [])
 
+            # 将 assistant 消息添加到历史
+            if tool_calls:
+                # 有工具调用时，包含 tool_calls 字段
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_message.content or "",
+                        "tool_calls": [
+                            tool_call.model_dump() for tool_call in tool_calls
+                        ],
+                    }
+                )
+            else:
+                # 没有工具调用时，只添加 content
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": assistant_message.content or "",
+                    }
+                )
+
             for tool_call in tool_calls:
                 tool_name = tool_call.function.name
                 arguments = self._parse_function_call_arguments(
@@ -193,7 +214,6 @@ class OpenAIFuncCallAgent(Agent):
 
             # 没有工具调用时，使用 assistant 的 content 作为最终响应
             final_response = assistant_message.content or ""
-            messages.append({"role": "assistant", "content": final_response})
             break
 
         if current_iteration >= iterations_limit and not final_response:
