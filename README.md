@@ -181,31 +181,20 @@ class MyCustomAgent(Agent):
 
 ### 创建自定义工具
 
-工具需要继承 `Tool` 基类：
+使用 `@tool` 装饰器定义工具：
 
 ```python
-from liagents.tools.base import Tool, ToolParameter
+from liagents.tools.base import tool
 
-class MyTool(Tool):
-    def __init__(self):
-        super().__init__(
-            name="my_tool",
-            description="我的工具描述"
-        )
+@tool
+def my_tool(param1: str, param2: int = 10) -> str:
+    """我的工具描述"""
+    # 实现工具逻辑
+    return f"执行结果: {param1}, {param2}"
 
-    def run(self, parameters: dict) -> str:
-        # 实现工具逻辑
-        return "执行结果"
-
-    def get_parameters(self) -> list[ToolParameter]:
-        return [
-            ToolParameter(
-                name="param1",
-                type="string",
-                description="参数描述",
-                required=True
-            )
-        ]
+# 使用工具
+result = my_tool.run({"param1": "hello"})
+result2 = my_tool.run({"param1": "hello", "param2": 20})
 ```
 
 ## 设计理念
