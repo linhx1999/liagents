@@ -44,27 +44,11 @@ class Tool:
         return self._parameters
 
     def run(self, parameters: Dict[str, Any]) -> str:
-        """执行工具
-
-        Args:
-            parameters: 参数字典
-
-        Returns:
-            执行结果字符串
-        """
-        # 转换为适合函数调用的参数
-        kwargs = {}
-        for param in self.get_parameters():
-            if param.name in parameters:
-                kwargs[param.name] = parameters[param.name]
-
+        """执行工具并返回结果字符串"""
+        kwargs = {p.name: parameters[p.name] for p in self.get_parameters() if p.name in parameters}
         try:
             result = self.func(**kwargs)
-            # 如果结果是字符串，直接返回
-            if isinstance(result, str):
-                return result
-            # 否则转换为字符串
-            return str(result)
+            return result if isinstance(result, str) else str(result)
         except Exception as e:
             return f"执行出错: {str(e)}"
 
@@ -91,34 +75,17 @@ class Tool:
         }
 
     def to_schema(self) -> Dict[str, Any]:
-        """转换为 OpenAI function calling schema 格式
-
-        用于 FunctionCallAgent，使工具能够被 OpenAI 原生 function calling 使用
-
-        Returns:
-            符合 OpenAI function calling 标准的 schema
-        """
-        parameters = self.get_parameters()
-
-        # 构建 properties
+        """转换为 OpenAI function calling schema 格式"""
         properties = {}
         required = []
 
-        for param in parameters:
-            # 基础属性定义
+        for param in self.get_parameters():
             prop = {"type": param.type, "description": param.description}
-
-            # 如果有默认值，添加到描述中（OpenAI schema 不支持 default 字段）
             if param.default is not None:
                 prop["description"] = f"{param.description} (默认: {param.default})"
-
-            # 如果是数组类型，添加 items 定义
             if param.type == "array":
-                prop["items"] = {"type": "string"}  # 默认字符串数组
-
+                prop["items"] = {"type": "string"}
             properties[param.name] = prop
-
-            # 收集必需参数
             if param.required:
                 required.append(param.name)
 
@@ -145,35 +112,18 @@ class Tool:
 def tool(func: Callable) -> Tool:
     """极简工具装饰器，将函数转换为工具
 
-    自动使用函数名作为工具名，使用 docstring 作为工具描述。
-    自动从函数签名推断参数类型和必需性。
+    自动使用函数名作为工具名、docstring 作为工具描述，
+    并从函数签名推断参数类型和必需性。
 
-    支持使用 PEP 593 的 Annotated 类型注解来提供参数描述。
-
-    Args:
-        func: 被装饰的函数
-
-    Returns:
-        Tool 实例
+    支持使用 PEP 593 的 Annotated 类型注解提供参数描述。
 
     Examples:
         >>> from typing import Annotated
-        >>>
         >>> @tool
         >>> def search(
-        >>>     query: Annotated[str, "搜索查询关键词"],
-        >>>     limit: Annotated[int, "返回结果数量上限"] = 10
-        >>> ) -> str:
-        ...     \"\"\"搜索工具，支持指定结果数量\"\"\"
-        ...     return f"搜索 {query}，返回 {limit} 条结果"
-
-        >>> # 使用
-        >>> search.run({"query": "Python"})
-        >>> search.run({"query": "Python", "limit": 5})
-
-    不使用 Annotated 的示例（向后兼容）：
-        >>> @tool
-        >>> def simple_search(query: str, limit: int = 10) -> str:
+        ...     query: Annotated[str, "搜索查询关键词"],
+        ...     limit: Annotated[int, "返回结果数量上限"] = 10
+        ... ) -> str:
         ...     \"\"\"搜索工具\"\"\"
         ...     return f"搜索 {query}，返回 {limit} 条结果"
     """
@@ -192,56 +142,33 @@ def tool(func: Callable) -> Tool:
         elif get_origin(type_annotation) is list:
             return "array"
         else:
-            # 默认为 string
             return "string"
 
     def _infer_parameters(func: Callable) -> List[ToolParameter]:
-        """从函数签名推断参数定义
-
-        支持使用 PEP 593 的 Annotated 类型注解来提供参数描述：
-
-        Examples:
-            >>> def search(
-            ...     query: Annotated[str, "搜索查询关键词"],
-            ...     limit: Annotated[int, "返回结果数量上限"] = 10
-            ... ) -> str:
-            ...     pass
-        """
+        """从函数签名推断参数定义，支持 Annotated 类型注解"""
         sig = inspect.signature(func)
         parameters = []
 
         for param_name, param in sig.parameters.items():
-            # 跳过 self 参数
             if param_name == "self":
                 continue
 
-            # 提取类型和描述
             param_type = "string"
             param_description = f"{param_name} 参数"
 
             if param.annotation != inspect.Parameter.empty:
                 annotation = param.annotation
-
-                # 检查是否是 Annotated 类型
                 if get_origin(annotation) is Annotated:
                     args = get_args(annotation)
                     if len(args) >= 2:
-                        # 第一个参数是实际类型
                         actual_type = args[0]
-                        # 第二个参数是描述（通常是字符串）
                         description = args[1] if isinstance(args[1], str) else None
-
-                        # 推断类型
                         param_type = _infer_type_string(actual_type)
-
-                        # 使用 Annotated 中的描述
                         if description:
                             param_description = description
                 else:
-                    # 不是 Annotated，直接推断类型
                     param_type = _infer_type_string(annotation)
 
-            # 判断是否必需
             required = param.default == inspect.Parameter.empty
 
             parameters.append(
