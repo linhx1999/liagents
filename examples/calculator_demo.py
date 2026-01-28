@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from liagents.tools.registry import ToolRegistry
-from liagents.tools.builtin.calculator import CalculatorTool
+from liagents.tools.builtin.calculator import python_calculator
 from liagents.agents.react_agent import ReActAgent
 from liagents.core.client import Client
 
@@ -13,7 +13,6 @@ def test_calculator_tool():
 
     # 创建包含计算器的注册表
     registry = ToolRegistry()
-    python_calculator = CalculatorTool()
     registry.register_tool(python_calculator)
 
     print("测试自定义计算器工具\n")
@@ -54,7 +53,6 @@ def test_agent_with_tool(user_question: str):
     client = Client()
     agent = ReActAgent(client=client)
 
-    python_calculator = CalculatorTool()
     agent.add_tool(python_calculator)
 
     print("与 ReActAgent 集成测试:")
