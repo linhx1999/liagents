@@ -33,7 +33,7 @@ class TestCalculatorToolInit:
         assert params[0].name == "expression"
         assert params[0].type == "string"
         assert params[0].required is True
-        assert "expression" in params[0].description
+        assert "计算" in params[0].description
 
 
 # ========== 基本运算测试 ==========
