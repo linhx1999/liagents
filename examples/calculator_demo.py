@@ -12,8 +12,8 @@ def test_calculator_tool():
 
     # 创建包含计算器的注册表
     registry = ToolRegistry()
-    calculator = CalculatorTool()
-    registry.register_tool(calculator)
+    python_calculator = CalculatorTool()
+    registry.register_tool(python_calculator)
 
     print("🧪 测试自定义计算器工具\n")
 
@@ -28,7 +28,7 @@ def test_calculator_tool():
 
     for i, expression in enumerate(test_cases, 1):
         print(f"测试 {i}: {expression}")
-        result = registry.execute_tool("calculator", expression)
+        result = registry.execute_tool("python_calculator", expression)
         print(f"结果: {result}\n")
 
 
@@ -41,8 +41,8 @@ def test_with_simple_agent():
 
     # 创建包含计算器的注册表
     registry = ToolRegistry()
-    calculator = CalculatorTool()
-    registry.register_tool(calculator)
+    python_calculator = CalculatorTool()
+    registry.register_tool(python_calculator)
 
     print("与 ReActAgent 集成测试:")
 
@@ -52,7 +52,7 @@ def test_with_simple_agent():
     print(f"用户问题: {user_question}")
 
     # 使用工具计算
-    calc_result = registry.execute_tool("calculator", "sqrt(16) + 2 * 3")
+    calc_result = registry.execute_tool("python_calculator", "sqrt(16) + 2 * 3")
     print(f"计算结果: {calc_result}")
 
     # 构建最终回答
@@ -61,7 +61,7 @@ def test_with_simple_agent():
     ]
 
     print("\nReActAgent 的回答:")
-    response = llm.run(final_messages)
+    response = llm.run(final_messages[0]["content"])
     for chunk in response:
         print(chunk, end="", flush=True)
     print("\n")
