@@ -70,18 +70,18 @@ class CalculatorTool(Tool):
         if not expression:
             return "错误：计算表达式不能为空"
 
-        print(f"正在计算: {expression}")
+        print(f"[Tool: {self.name}] 正在计算: {expression}")
 
         try:
             # 解析表达式
             node = ast.parse(expression, mode="eval")
             result = self._eval_node(node.body)
             result_str = str(result)
-            print(f"计算结果: {result_str}")
+            print(f"[Tool: {self.name}] 计算结果: {result_str}")
             return result_str
         except Exception as e:
             error_msg = f"计算失败: {str(e)}"
-            print(error_msg)
+            print(f"[Tool: {self.name}] {error_msg}")
             return error_msg
 
     def _eval_node(self, node):
