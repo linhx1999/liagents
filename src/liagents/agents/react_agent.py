@@ -149,7 +149,7 @@ class ReActAgent(Agent):
 
         while current_iteration < max_tool_iterations:
             # 调用LLM
-            response = self.client.invoke_chat(messages, **kwargs)
+            response = self.client.chat(messages, **kwargs)
 
             # 检查是否有工具调用
             tool_calls = self._parse_tool_calls(response)
