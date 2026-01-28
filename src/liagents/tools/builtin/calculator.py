@@ -3,7 +3,7 @@
 import ast
 import operator
 import math
-from typing import Dict, Any
+from typing import Annotated
 
 from ..base import tool
 
@@ -64,7 +64,7 @@ def _eval_node(node):
 
 
 @tool
-def python_calculator(expression: str) -> str:
+def python_calculator(expression: Annotated[str, "要计算的数学表达式"]) -> str:
     """Python计算器工具。执行数学计算，支持基本运算、数学函数等。
 
     例如：2+3*4, sqrt(16), sin(pi/2)等。
