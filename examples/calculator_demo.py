@@ -28,7 +28,7 @@ def test_calculator_tool():
 
     for i, expression in enumerate(test_cases, 1):
         print(f"测试 {i}: {expression}")
-        result = registry.execute_tool("python_calculator", expression)
+        result = registry.execute_tool("python_calculator", {"expression": expression})
         print(f"结果: {result}\n")
 
 
@@ -52,7 +52,7 @@ def test_with_simple_agent():
     print(f"用户问题: {user_question}")
 
     # 使用工具计算
-    calc_result = registry.execute_tool("python_calculator", "sqrt(16) + 2 * 3")
+    calc_result = registry.execute_tool("python_calculator", {"expression": "sqrt(16) + 2 * 3"})
     print(f"计算结果: {calc_result}")
 
     # 构建最终回答
