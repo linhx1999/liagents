@@ -42,7 +42,9 @@ def test_openai_func_call_agent_with_tools():
 
     agent.add_tool(tavily_search)
     agent.add_tool(python_calculator)
-    user_question = "搜索从上海到伦敦下周二最便宜的直飞航班票价，如果我要为一家四口订票，加上每人 23kg 的额外行李费（查一下该航司的标准），总共需要准备多少预算？"
+    user_question = (
+        "搜索从上海到伦敦下周二最便宜的直飞航班票价，如果我要为一家四口订票，加上每人 23kg 的额外行李费（查一下该航司的标准），总共需要准备多少预算？"
+    )
 
     print(f"用户问题: {user_question}")
     print("\n回答:")
