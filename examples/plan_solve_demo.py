@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from liagents.agents.plan_solve_agent import PlanSolveAgent
-from liagents.tools.builtin.calculator import python_calculator
 
 
 def test_plan_solve_todo_tracking():
@@ -15,13 +14,12 @@ def test_plan_solve_todo_tracking():
 
     agent = PlanSolveAgent()
 
-    # 添加计算工具用于后续计算
-    agent.add_tool(python_calculator)
-
     print("\n已注册工具:", agent.list_tools())
 
     # 复杂的投资回报分析任务
-    task = "帮我写一个贪吃蛇游戏，用 Python，并写好测试用例。"
+    task = (
+        "请帮我完成一个投资回报分析项目：假设初始投资100000元，年化收益率8%，计算10年后的复利终值；计算该投资在5年、10年、15年、20年后的累计收益；"
+    )
 
     print(f"\n任务: {task}")
     print("\n执行过程:")
