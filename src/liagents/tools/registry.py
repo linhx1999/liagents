@@ -21,13 +21,23 @@ class ToolRegistry:
         self._tools[tool.name] = tool
         print(f"工具 '{tool.name}' 已注册。")
 
-    def unregister(self, name: str):
-        """注销工具"""
+    def unregister_tool(self, name: str) -> bool:
+        """
+        注销工具
+
+        Args:
+            name: 工具名称
+
+        Returns:
+            是否成功注销
+        """
         if name in self._tools:
             del self._tools[name]
             print(f"工具 '{name}' 已注销。")
+            return True
         else:
             print(f"警告：工具 '{name}' 不存在。")
+            return False
 
     def get_tool(self, name: str) -> Optional[Tool]:
         """获取Tool对象"""

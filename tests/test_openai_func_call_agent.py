@@ -305,12 +305,9 @@ class TestBuildToolSchemas:
         assert "param1" in parameters["required"]
 
     def test_build_schemas_without_registry(self, mock_client):
-        """测试没有工具注册表"""
+        """测试空工具注册表"""
         agent = OpenAIFuncCallAgent(name="test_agent", client=mock_client)
-        agent.tool_registry = None
-
         schemas = agent._build_tool_schemas()
-
         assert schemas == []
 
     def test_build_schemas_calls_to_schema(self, func_call_agent_with_tools, mock_tool):
@@ -452,13 +449,10 @@ class TestConvertParameterTypes:
             is True
         )
 
-    def test_convert_without_tool_registry(self, mock_client):
-        """测试没有工具注册表"""
+    def test_convert_with_empty_registry(self, mock_client):
+        """测试空工具注册表时的参数转换"""
         agent = OpenAIFuncCallAgent(name="test_agent", client=mock_client)
-        agent.tool_registry = None
-
         result = agent._convert_parameter_types("test_tool", {"key": "value"})
-
         assert result == {"key": "value"}
 
     def test_convert_unknown_tool(self, func_call_agent_with_tools):
