@@ -38,17 +38,15 @@ class TestBuiltinInit:
         """测试 __all__ 导出"""
         from liagents.tools.builtin import __all__
 
-        from liagents.tools.builtin import (
-            python_calculator,
-            think,
-            write_todos,
-            tavily_search,
-        )
+        # __all__ 应该是字符串列表
+        assert isinstance(__all__, list)
+        assert all(isinstance(name, str) for name in __all__)
 
-        assert python_calculator in __all__
-        assert think in __all__
-        assert write_todos in __all__
-        assert tavily_search in __all__
+        # 验证所有预期的工具都在导出列表中
+        assert "python_calculator" in __all__
+        assert "think" in __all__
+        assert "write_todos" in __all__
+        assert "tavily_search" in __all__
 
 
 class TestBuiltinToolsAvailability:
