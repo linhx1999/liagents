@@ -1,6 +1,12 @@
 import json
 import pytest
+import os
 from unittest.mock import Mock
+
+# 设置必需的环境变量
+os.environ["MODEL"] = "test-model"
+os.environ["OPENAI_API_KEY"] = "test-api-key"
+os.environ["OPENAI_BASE_URL"] = "https://test.example.com"
 
 from liagents.agents.react_agent import ReActAgent
 from liagents.core.client import Client
