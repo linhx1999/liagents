@@ -9,14 +9,6 @@ from ..tools.base import Tool
 from ..tools.registry import ToolRegistry
 
 
-def _map_parameter_type(param_type: str) -> str:
-    """将工具参数类型映射为JSON Schema允许的类型"""
-    normalized = (param_type or "").lower()
-    if normalized in {"string", "number", "integer", "boolean", "array", "object"}:
-        return normalized
-    return "string"
-
-
 class OpenAIFuncCallAgent(Agent):
     """基于OpenAI原生函数调用机制的Agent"""
 

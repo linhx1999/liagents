@@ -15,10 +15,7 @@ os.environ["MODEL"] = "test-model"
 os.environ["OPENAI_API_KEY"] = "test-api-key"
 os.environ["OPENAI_BASE_URL"] = "https://test.example.com"
 
-from liagents.agents.openai_func_call_agent import (
-    OpenAIFuncCallAgent,
-    _map_parameter_type,
-)
+from liagents.agents.openai_func_call_agent import OpenAIFuncCallAgent
 from liagents.core.client import Client
 from liagents.core.config import Config
 from liagents.core.message import Message
@@ -161,35 +158,6 @@ def mock_chat_completion_with_tool_call():
         object="chat.completion",
     )
     return completion
-
-
-# ========== _map_parameter_type 测试 ==========
-
-
-class TestMapParameterType:
-    """测试 _map_parameter_type 辅助函数"""
-
-    def test_valid_types(self):
-        """测试有效的 JSON Schema 类型"""
-        assert _map_parameter_type("string") == "string"
-        assert _map_parameter_type("number") == "number"
-        assert _map_parameter_type("integer") == "integer"
-        assert _map_parameter_type("boolean") == "boolean"
-        assert _map_parameter_type("array") == "array"
-        assert _map_parameter_type("object") == "object"
-
-    def test_case_insensitive(self):
-        """测试大小写不敏感"""
-        assert _map_parameter_type("String") == "string"
-        assert _map_parameter_type("NUMBER") == "number"
-        assert _map_parameter_type("Integer") == "integer"
-
-    def test_invalid_types(self):
-        """测试无效类型默认返回 string"""
-        assert _map_parameter_type("invalid") == "string"
-        assert _map_parameter_type("text") == "string"
-        assert _map_parameter_type("") == "string"
-        assert _map_parameter_type(None) == "string"
 
 
 # ========== 初始化测试 ==========
@@ -797,10 +765,6 @@ class TestEdgeCases:
 
         # 由于 "invalid_int" 无法转换为 int，应该保留原值
         assert result["param2"] == "invalid_int"
-
-    def test_map_parameter_type_with_none(self):
-        """测试 None 类型映射"""
-        assert _map_parameter_type(None) == "string"
 
     def test_build_tool_schemas_exception_handling(self, func_call_agent_with_tools):
         """测试工具参数获取异常处理"""
