@@ -15,7 +15,7 @@ os.environ["MODEL"] = "test-model"
 os.environ["OPENAI_API_KEY"] = "test-api-key"
 os.environ["OPENAI_BASE_URL"] = "https://test.example.com"
 
-from liagents.agents.plan_solve_agent import PlanSolveAgent, DEFAULT_PLAN_SOLVE_PROMPT
+from liagents.agents.plan_solve_agent import PlanSolveAgent
 from liagents.core.client import Client
 from liagents.core.config import Config
 from liagents.core.message import Message
@@ -140,12 +140,6 @@ class TestPlanSolveAgentInit:
 
         assert agent.name == "PlanSolveAgent"
 
-    def test_init_without_system_prompt(self, mock_client):
-        """测试不提供系统提示词时使用默认提示词"""
-        agent = PlanSolveAgent(name="test_agent", client=mock_client)
-
-        assert agent.system_prompt == DEFAULT_PLAN_SOLVE_PROMPT
-
     def test_init_with_custom_max_iterations(self, mock_client):
         """测试自定义 max_tool_iterations"""
         agent = PlanSolveAgent(
@@ -192,31 +186,6 @@ class TestDefaultTools:
 
         assert result is True
         assert "write_todos" not in plan_solve_agent.list_tools()
-
-
-# ========== 默认提示词测试 ==========
-
-
-class TestDefaultPrompt:
-    """测试默认系统提示词"""
-
-    def test_default_prompt_contains_plan_solve(self, mock_client):
-        """测试默认提示词包含 Plan-Solve 模式描述"""
-        agent = PlanSolveAgent(name="test_agent", client=mock_client)
-
-        assert "PLAN" in agent.system_prompt
-        assert "EXECUTE" in agent.system_prompt
-        assert "COMPLETE" in agent.system_prompt
-
-    def test_default_prompt_contains_write_todos_ref(self, mock_client):
-        """测试默认提示词包含 write_todos 工具引用"""
-        agent = PlanSolveAgent(name="test_agent", client=mock_client)
-
-        assert "write_todos" in agent.system_prompt
-
-    def test_custom_prompt_overrides_default(self, plan_solve_agent_with_custom_prompt):
-        """测试自定义提示词覆盖默认值"""
-        assert plan_solve_agent_with_custom_prompt.system_prompt == "自定义提示词"
 
 
 # ========== 继承方法测试 ==========
@@ -414,6 +383,7 @@ class TestEdgeCases:
     def test_remove_all_tools(self, plan_solve_agent):
         """测试移除所有工具"""
         plan_solve_agent.remove_tool("write_todos")
+        plan_solve_agent.remove_tool("think")
 
         # has_tools() 检查 tool_registry 是否为 None，不是检查是否有工具
         # 所以这里检查 list_tools() 是否为空即可
