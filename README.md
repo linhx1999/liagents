@@ -163,6 +163,9 @@ uv pip add --dev package-name
 
 # 同步依赖（更新 uv.lock）
 uv sync
+
+# 安装全部组
+uv sync --all-groups
 ```
 
 ### 创建自定义 Agent
