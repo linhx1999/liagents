@@ -25,6 +25,10 @@ dev = [
 example = [
     "python-dotenv~=1.0.0",
 ]
+model = [
+    "vllm~=0.8.0",
+    "transformers~=4.52.0"
+]
 
 [[tool.uv.index]]
 name = "tencent"
