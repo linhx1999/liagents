@@ -3,6 +3,9 @@
 import os
 import pytest
 
+# 设置测试所需的环境变量
+os.environ["MODEL"] = "test-model"
+
 from liagents.core.config import Config
 
 

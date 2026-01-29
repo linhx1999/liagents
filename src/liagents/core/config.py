@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-    """HelloAgents配置类"""
 
     # LLM配置
     model: str = os.getenv("MODEL", "")
@@ -21,15 +20,12 @@ class Config(BaseModel):
     @classmethod
     def from_env(cls) -> "Config":
         """从环境变量创建配置"""
+        max_tokens_str = os.getenv("MAX_COMPLETION_TOKENS")
         return cls(
             debug=os.getenv("DEBUG", "false").lower() == "true",
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             temperature=float(os.getenv("TEMPERATURE", "0.7")),
-            max_completion_tokens=(
-                int(os.getenv("MAX_COMPLETION_TOKENS"))
-                if os.getenv("MAX_COMPLETION_TOKENS")
-                else None
-            ),
+            max_completion_tokens=int(max_tokens_str) if max_tokens_str else None,
         )
 
     def to_dict(self) -> Dict[str, Any]:
