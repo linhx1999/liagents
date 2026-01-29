@@ -11,4 +11,4 @@ def write_todos(
     ]
 ) -> str:
     """用于规划和追踪复杂任务的进度。开始任何任务前，必须首先调用此工具创建待办列表。在执行任务过程中，持续更新待办列表状态。"""
-    return todo_list
+    return str(todo_list)
