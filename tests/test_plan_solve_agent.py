@@ -89,12 +89,12 @@ def mock_chat_completion_without_tools():
 
 @pytest.fixture
 def mock_chat_completion_with_todo_call():
-    """创建带 write_todo 工具调用的模拟响应"""
+    """创建带 write_todos 工具调用的模拟响应"""
     tool_call = ChatCompletionMessageToolCall(
         id="call_123",
         type="function",
         function=Function(
-            name="write_todo",
+            name="write_todos",
             arguments='{"todo_list": [{"content": "步骤1", "status": "pending"}, {"content": "步骤2", "status": "pending"}]}',
         ),
     )
@@ -169,29 +169,29 @@ class TestPlanSolveAgentInit:
 class TestDefaultTools:
     """测试默认工具配置"""
 
-    def test_write_todo_tool_registered(self, plan_solve_agent):
-        """测试 write_todo 工具已注册"""
+    def test_write_todos_tool_registered(self, plan_solve_agent):
+        """测试 write_todos 工具已注册"""
         tools = plan_solve_agent.list_tools()
 
-        assert "write_todo" in tools
+        assert "write_todos" in tools
 
-    def test_has_write_todo_tool(self, plan_solve_agent):
-        """测试有 write_todo 工具"""
+    def test_has_write_todos_tool(self, plan_solve_agent):
+        """测试有 write_todos 工具"""
         assert plan_solve_agent.has_tools() is True
 
-    def test_get_write_todo_tool(self, plan_solve_agent):
-        """测试获取 write_todo 工具"""
-        tool = plan_solve_agent.tool_registry.get_tool("write_todo")
+    def test_get_write_todos_tool(self, plan_solve_agent):
+        """测试获取 write_todos 工具"""
+        tool = plan_solve_agent.tool_registry.get_tool("write_todos")
 
         assert tool is not None
-        assert tool.name == "write_todo"
+        assert tool.name == "write_todos"
 
-    def test_can_remove_write_todo_tool(self, plan_solve_agent):
-        """测试可以移除 write_todo 工具"""
-        result = plan_solve_agent.remove_tool("write_todo")
+    def test_can_remove_write_todos_tool(self, plan_solve_agent):
+        """测试可以移除 write_todos 工具"""
+        result = plan_solve_agent.remove_tool("write_todos")
 
         assert result is True
-        assert "write_todo" not in plan_solve_agent.list_tools()
+        assert "write_todos" not in plan_solve_agent.list_tools()
 
 
 # ========== 默认提示词测试 ==========
@@ -208,11 +208,11 @@ class TestDefaultPrompt:
         assert "EXECUTE" in agent.system_prompt
         assert "COMPLETE" in agent.system_prompt
 
-    def test_default_prompt_contains_write_todo_ref(self, mock_client):
-        """测试默认提示词包含 write_todo 工具引用"""
+    def test_default_prompt_contains_write_todos_ref(self, mock_client):
+        """测试默认提示词包含 write_todos 工具引用"""
         agent = PlanSolveAgent(name="test_agent", client=mock_client)
 
-        assert "write_todo" in agent.system_prompt
+        assert "write_todos" in agent.system_prompt
 
     def test_custom_prompt_overrides_default(self, plan_solve_agent_with_custom_prompt):
         """测试自定义提示词覆盖默认值"""
@@ -237,12 +237,12 @@ class TestInheritedMethods:
 
         assert "extra_tool" in plan_solve_agent.list_tools()
 
-    def test_list_tools_includes_write_todo(self, plan_solve_agent):
-        """测试列出工具包含 write_todo"""
+    def test_list_tools_includes_write_todos(self, plan_solve_agent):
+        """测试列出工具包含 write_todos"""
         tools = plan_solve_agent.list_tools()
 
         assert len(tools) >= 1
-        assert "write_todo" in tools
+        assert "write_todos" in tools
 
     def test_run_inherits_from_parent(
         self, plan_solve_agent, mock_chat_completion_without_tools
@@ -409,11 +409,11 @@ class TestEdgeCases:
         tools = plan_solve_agent.list_tools()
         assert "tool1" in tools
         assert "tool2" in tools
-        assert "write_todo" in tools  # 默认工具应仍存在
+        assert "write_todos" in tools  # 默认工具应仍存在
 
     def test_remove_all_tools(self, plan_solve_agent):
         """测试移除所有工具"""
-        plan_solve_agent.remove_tool("write_todo")
+        plan_solve_agent.remove_tool("write_todos")
 
         # has_tools() 检查 tool_registry 是否为 None，不是检查是否有工具
         # 所以这里检查 list_tools() 是否为空即可
