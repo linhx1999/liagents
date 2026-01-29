@@ -25,3 +25,7 @@ dev = [
 example = [
     "python-dotenv~=1.0.0",
 ]
+
+[[tool.uv.index]]
+name = "tencent"
+url = "https://mirrors.cloud.tencent.com/pypi/simple/"
