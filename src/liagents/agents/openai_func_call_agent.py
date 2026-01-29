@@ -1,11 +1,10 @@
 import json
-from typing import Iterator, Optional, Union, Any, Dict
+from typing import Iterator, Optional, Union, Any
 
 from ..core.agent import Agent
 from ..core.config import Config
 from ..core.client import Client
 from ..core.message import Message
-from ..tools.base import Tool
 from ..tools.registry import ToolRegistry
 
 
@@ -18,13 +17,11 @@ class OpenAIFuncCallAgent(Agent):
         client: Client = Client(),
         system_prompt: str = "",
         config: Optional[Config] = None,
-        tool_registry: Optional["ToolRegistry"] = None,
+        tool_registry: ToolRegistry = ToolRegistry(),
         default_tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 10,
     ):
-        super().__init__(name, client, system_prompt.strip(), config)
-        self.tool_registry = tool_registry or ToolRegistry()
-        self._history: list[Message] = []
+        super().__init__(name, client, system_prompt.strip(), config, tool_registry)
         self.default_tool_choice = default_tool_choice
         self.max_tool_iterations = max_tool_iterations
 
@@ -225,26 +222,6 @@ class OpenAIFuncCallAgent(Agent):
         self.add_message(Message("user", user_input))
         self.add_message(Message("assistant", final_response))
         return final_response
-
-    def add_tool(self, tool: Tool) -> None:
-        """便捷方法：将工具注册到当前Agent"""
-        self.tool_registry.register_tool(tool)
-
-    def remove_tool(self, tool_name: str) -> bool:
-        if self.tool_registry:
-            before = set(self.tool_registry.list_tools())
-            self.tool_registry.unregister(tool_name)
-            after = set(self.tool_registry.list_tools())
-            return tool_name in before and tool_name not in after
-        return False
-
-    def list_tools(self) -> list[str]:
-        if self.tool_registry:
-            return self.tool_registry.list_tools()
-        return []
-
-    def has_tools(self) -> bool:
-        return self.tool_registry is not None
 
     def stream_run(
         self,

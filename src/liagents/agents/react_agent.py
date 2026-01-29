@@ -7,7 +7,6 @@ from ..core.client import Client
 from ..core.config import Config
 from ..core.message import Message
 from ..tools.registry import ToolRegistry
-from ..tools.base import Tool
 
 if TYPE_CHECKING:
     from ..tools.registry import ToolRegistry
@@ -22,7 +21,7 @@ class ReActAgent(Agent):
         client: Client = Client(),
         system_prompt: str = "",
         config: Optional[Config] = None,
-        tool_registry: Optional[ToolRegistry] = None,
+        tool_registry: ToolRegistry = ToolRegistry(),
     ):
         """
         初始化ReActAgent
@@ -34,9 +33,7 @@ class ReActAgent(Agent):
             config: 配置对象
             tool_registry: 工具注册表（可选，如果提供则启用工具调用）
         """
-        super().__init__(name, client, system_prompt, config)
-        self.tool_registry = tool_registry or ToolRegistry()
-        self._history: list[Message] = []
+        super().__init__(name, client, system_prompt, config, tool_registry)
 
     def _get_enhanced_system_prompt(self) -> str:
         """构建增强的系统提示词，包含工具信息"""
@@ -193,28 +190,6 @@ class ReActAgent(Agent):
         self.add_message(Message("assistant", final_response))
 
         return final_response
-
-    def add_tool(self, tool: Tool) -> None:
-        """
-        添加工具到Agent
-
-        Args:
-            tool: Tool对象
-        """
-        # 直接使用 ToolRegistry 的 register_tool 方法
-        self.tool_registry.register_tool(tool)
-
-    def remove_tool(self, tool_name: str) -> bool:
-        """移除工具（便利方法）"""
-        if self.tool_registry:
-            return self.tool_registry.unregister_tool(tool_name)
-        return False
-
-    def list_tools(self) -> list:
-        """列出所有可用工具"""
-        if self.tool_registry:
-            return self.tool_registry.list_tools()
-        return []
 
     def stream_run(self, user_input: str, **kwargs) -> Iterator[str]:
         """
