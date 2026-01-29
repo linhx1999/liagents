@@ -186,6 +186,10 @@ class OpenAIFuncCallAgent(Agent):
                 )
 
             for tool_call in tool_calls:
+                # 只处理 function 类型的工具调用
+                if tool_call.type != "function":
+                    raise ValueError(f"不支持的工具调用类型: {tool_call.type}")
+
                 tool_name = tool_call.function.name
                 arguments = self._parse_function_call_arguments(
                     tool_call.function.arguments
