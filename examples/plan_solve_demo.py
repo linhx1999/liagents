@@ -12,7 +12,7 @@ def test_plan_solve_todo_tracking():
     print("\n" + "=" * 60)
     print("PlanSolveAgent 待办列表追踪测试")
 
-    agent = PlanSolveAgent()
+    agent = PlanSolveAgent(debug=True)
 
     print("\n已注册工具:", agent.list_tools())
 
