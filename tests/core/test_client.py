@@ -3,8 +3,9 @@
 import pytest
 from unittest.mock import Mock, patch
 import os
-from typing import cast
+from typing import cast, Any
 from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionToolUnionParam
 
 # 设置必需的环境变量
 os.environ["MODEL"] = "test-model"
@@ -17,6 +18,13 @@ from liagents.core.client import Client
 def _m(messages: list[dict[str, str]]) -> list[ChatCompletionMessageParam]:
     """将字典消息列表转换为 ChatCompletionMessageParam 类型"""
     return cast(list[ChatCompletionMessageParam], messages)
+
+
+def _t(
+    tools: list[dict[str, Any]],
+) -> list[ChatCompletionToolUnionParam]:
+    """将字典工具列表转换为 ChatCompletionToolUnionParam 类型"""
+    return cast(list[ChatCompletionToolUnionParam], tools)
 
 
 class TestClientInit:
@@ -236,7 +244,7 @@ class TestChatWithTools:
         with patch.object(
             client._client.chat.completions, "create", return_value=mock_response
         ):
-            result = client.chat_with_tools(messages, tools)
+            result = client.chat_with_tools(messages, _t(tools))
             assert result.choices[0].message.content == "工具执行结果"
 
     def test_chat_with_tools_tool_choice(self):
@@ -254,7 +262,7 @@ class TestChatWithTools:
         with patch.object(
             client._client.chat.completions, "create", return_value=mock_response
         ) as mock_create:
-            client.chat_with_tools(messages, tools, tool_choice="none")
+            client.chat_with_tools(messages, _t(tools), tool_choice="none")
             call_kwargs = mock_create.call_args[1]
             assert call_kwargs["tool_choice"] == "none"
 
@@ -293,7 +301,7 @@ class TestChatWithTools:
             side_effect=Exception("API Error"),
         ):
             with pytest.raises(RuntimeError, match="调用LLM API时发生错误"):
-                client.chat_with_tools(messages, tools)
+                client.chat_with_tools(messages, _t(tools))
 
 
 class TestClientAttributes:
