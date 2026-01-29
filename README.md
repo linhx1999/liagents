@@ -41,6 +41,9 @@ uv pip install .
 
 # 安装开发依赖（包含测试和代码格式化工具）
 uv pip install -e ".[dev]"
+
+# 安装全部组依赖
+uv sync --all-groups
 ```
 
 或者使用 uv 的同步功能（推荐）：
