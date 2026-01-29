@@ -14,6 +14,7 @@ class ToolParameter:
     description: str
     required: bool = True
     default: Any = None
+    items_type: str = "string"  # 数组元素类型，仅在 type 为 "array" 时使用
 
 
 class Tool:
@@ -73,6 +74,7 @@ class Tool:
                     "description": p.description,
                     "required": p.required,
                     "default": p.default,
+                    "items_type": p.items_type,
                 }
                 for p in self.get_parameters()
             ],
@@ -88,7 +90,7 @@ class Tool:
             if param.default is not None:
                 prop["description"] = f"{param.description} (默认: {param.default})"
             if param.type == "array":
-                prop["items"] = {"type": "string"}
+                prop["items"] = {"type": param.items_type}
             properties[param.name] = prop
             if param.required:
                 required.append(param.name)
@@ -132,22 +134,31 @@ def tool(func: Callable) -> Tool:
         ...     return f"搜索 {query}，返回 {limit} 条结果"
     """
 
-    def _infer_type_string(type_annotation: Any) -> str:
-        """将 Python 类型注解转换为 JSON Schema 类型字符串"""
+    def _infer_type_string(type_annotation: Any) -> tuple[str, str]:
+        """将 Python 类型注解转换为 (JSON Schema 类型字符串, 数组元素类型) 元组"""
+        # 处理 dict 类型
+        if get_origin(type_annotation) is dict or type_annotation == dict:
+            return ("object", "string")
+
         if type_annotation == int:
-            return "integer"
+            return ("integer", "string")
         elif type_annotation == float:
-            return "number"
+            return ("number", "string")
         elif type_annotation == bool:
-            return "boolean"
+            return ("boolean", "string")
         elif type_annotation == str:
-            return "string"
+            return ("string", "string")
         elif type_annotation == list:
-            return "array"
+            return ("array", "string")
         elif get_origin(type_annotation) is list:
-            return "array"
+            # 处理 list[X] 泛型，获取元素类型
+            args = get_args(type_annotation)
+            item_type = "string"
+            if args:
+                item_type = _infer_type_string(args[0])[0]
+            return ("array", item_type)
         else:
-            return "string"
+            return ("string", "string")
 
     def _infer_parameters(func: Callable) -> List[ToolParameter]:
         """从函数签名推断参数定义，支持 Annotated 类型注解"""
@@ -159,6 +170,7 @@ def tool(func: Callable) -> Tool:
                 continue
 
             param_type = "string"
+            items_type = "string"
             param_description = f"{param_name} 参数"
 
             if param.annotation != inspect.Parameter.empty:
@@ -168,11 +180,11 @@ def tool(func: Callable) -> Tool:
                     if len(args) >= 2:
                         actual_type = args[0]
                         description = args[1] if isinstance(args[1], str) else None
-                        param_type = _infer_type_string(actual_type)
+                        param_type, items_type = _infer_type_string(actual_type)
                         if description:
                             param_description = description
                 else:
-                    param_type = _infer_type_string(annotation)
+                    param_type, items_type = _infer_type_string(annotation)
 
             required = param.default == inspect.Parameter.empty
 
@@ -183,6 +195,7 @@ def tool(func: Callable) -> Tool:
                     description=param_description,
                     required=required,
                     default=param.default if not required else None,
+                    items_type=items_type,
                 )
             )
 
