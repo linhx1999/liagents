@@ -46,6 +46,8 @@ def _eval_node(node):
     elif isinstance(node, ast.UnaryOp):
         return OPERATORS[type(node.op)](_eval_node(node.operand))
     elif isinstance(node, ast.Call):
+        if not isinstance(node.func, ast.Name):
+            raise ValueError(f"不支持的表达式类型: {type(node.func)}")
         func_name = node.func.id
         if func_name in FUNCTIONS:
             args = [_eval_node(arg) for arg in node.args]
