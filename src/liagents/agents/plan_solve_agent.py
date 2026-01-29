@@ -24,7 +24,7 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
         client: Client = Client(),
         system_prompt: str = DEFAULT_PLAN_SOLVE_PROMPT,
         config: Optional[Config] = None,
-        tool_registry: Optional[ToolRegistry] = None,
+        tool_registry: ToolRegistry = ToolRegistry(),
         default_tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 20,
     ):

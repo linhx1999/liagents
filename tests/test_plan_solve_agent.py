@@ -19,9 +19,17 @@ from liagents.agents.plan_solve_agent import PlanSolveAgent, DEFAULT_PLAN_SOLVE_
 from liagents.core.client import Client
 from liagents.core.config import Config
 from liagents.core.message import Message
+from liagents.tools.registry import tool_registry
 
 
 # ========== 测试 Fixtures ==========
+
+
+@pytest.fixture(autouse=True)
+def cleanup_tool_registry():
+    """每个测试后清理工具注册表"""
+    yield
+    tool_registry.clear()
 
 
 @pytest.fixture
@@ -41,11 +49,14 @@ def mock_config():
 @pytest.fixture
 def plan_solve_agent(mock_client):
     """创建 PlanSolveAgent 实例（使用默认配置）"""
-    return PlanSolveAgent(
+    agent = PlanSolveAgent(
         name="test_plan_agent",
         client=mock_client,
         system_prompt="你是一个测试助手",
     )
+    yield agent
+    # 测试后清理
+    agent.tool_registry.clear()
 
 
 @pytest.fixture
