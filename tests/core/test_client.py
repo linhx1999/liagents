@@ -1,8 +1,10 @@
 """测试 Client 客户端类"""
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import os
+from typing import cast
+from openai.types.chat import ChatCompletionMessageParam
 
 # 设置必需的环境变量
 os.environ["MODEL"] = "test-model"
@@ -10,6 +12,11 @@ os.environ["OPENAI_API_KEY"] = "test-api-key"
 os.environ["OPENAI_BASE_URL"] = "https://test.example.com"
 
 from liagents.core.client import Client
+
+
+def _m(messages: list[dict[str, str]]) -> list[ChatCompletionMessageParam]:
+    """将字典消息列表转换为 ChatCompletionMessageParam 类型"""
+    return cast(list[ChatCompletionMessageParam], messages)
 
 
 class TestClientInit:
@@ -58,7 +65,7 @@ class TestChat:
     def test_chat_basic(self):
         """测试基本聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "你好"}]
+        messages = _m([{"role": "user", "content": "你好"}])
 
         # Mock OpenAI 响应
         mock_response = Mock()
@@ -74,7 +81,7 @@ class TestChat:
     def test_chat_with_custom_temperature(self):
         """测试带自定义温度的聊天"""
         client = Client(temperature=0.3)
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         mock_response = Mock()
         mock_response.choices = [Mock()]
@@ -90,7 +97,7 @@ class TestChat:
     def test_chat_with_custom_model(self):
         """测试带自定义模型的聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         mock_response = Mock()
         mock_response.choices = [Mock()]
@@ -106,7 +113,7 @@ class TestChat:
     def test_chat_with_max_tokens(self):
         """测试带 max_tokens 的聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         mock_response = Mock()
         mock_response.choices = [Mock()]
@@ -122,7 +129,7 @@ class TestChat:
     def test_chat_error_handling(self):
         """测试聊天错误处理"""
         client = Client()
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         with patch.object(
             client._client.chat.completions,
@@ -135,7 +142,7 @@ class TestChat:
     def test_chat_with_empty_response(self):
         """测试空响应处理"""
         client = Client()
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         mock_response = Mock()
         mock_response.choices = [Mock()]
@@ -154,7 +161,7 @@ class TestStreamChat:
     def test_stream_chat_returns_iterator(self):
         """测试流式聊天返回迭代器"""
         client = Client()
-        messages = [{"role": "user", "content": "你好"}]
+        messages = _m([{"role": "user", "content": "你好"}])
 
         # Mock 流式响应
         mock_chunk1 = Mock()
@@ -176,7 +183,7 @@ class TestStreamChat:
     def test_stream_chat_empty_chunks(self):
         """测试空块的流式聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         mock_chunk = Mock()
         mock_chunk.choices = [Mock()]
@@ -192,7 +199,7 @@ class TestStreamChat:
     def test_stream_chat_error(self):
         """测试流式聊天错误处理"""
         client = Client()
-        messages = [{"role": "user", "content": "测试"}]
+        messages = _m([{"role": "user", "content": "测试"}])
 
         with patch.object(
             client._client.chat.completions,
@@ -209,7 +216,7 @@ class TestChatWithTools:
     def test_chat_with_tools_basic(self):
         """测试带工具的基本聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "使用工具"}]
+        messages = _m([{"role": "user", "content": "使用工具"}])
         tools = [
             {
                 "type": "function",
@@ -235,7 +242,7 @@ class TestChatWithTools:
     def test_chat_with_tools_tool_choice(self):
         """测试带工具选择的聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "使用工具"}]
+        messages = _m([{"role": "user", "content": "使用工具"}])
         tools = [
             {"type": "function", "function": {"name": "test_tool", "parameters": {}}}
         ]
@@ -254,7 +261,7 @@ class TestChatWithTools:
     def test_chat_with_tools_without_tools(self):
         """测试不带工具的聊天"""
         client = Client()
-        messages = [{"role": "user", "content": "你好"}]
+        messages = _m([{"role": "user", "content": "你好"}])
 
         mock_response = Mock()
         mock_response.choices = [Mock()]
@@ -275,7 +282,7 @@ class TestChatWithTools:
     def test_chat_with_tools_error(self):
         """测试带工具聊天的错误处理"""
         client = Client()
-        messages = [{"role": "user", "content": "使用工具"}]
+        messages = _m([{"role": "user", "content": "使用工具"}])
         tools = [
             {"type": "function", "function": {"name": "test_tool", "parameters": {}}}
         ]
