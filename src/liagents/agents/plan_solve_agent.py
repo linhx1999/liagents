@@ -1,39 +1,39 @@
-from typing import Optional, Union, Any
+from typing import Optional, Union
 
 from ..core.config import Config
 from ..core.client import Client
 from ..tools.registry import ToolRegistry
 from ..tools.builtin.planner import write_todos
+from ..tools.builtin.think_tool import think
 from .openai_func_call_agent import OpenAIFuncCallAgent
 
-DEFAULT_PLAN_SOLVE_PROMPT = """You are a Plan-Solve Agent. Follow this pattern:
+DEFAULT_PLAN_SOLVE_PROMPT = """你是一个规划求解 Agent。遵循以下模式：
 
-**IMPORTANT: Before starting any task, you MUST call write_todos tool first to create a todo list.**
+## 工作流程
 
-1. PLAN: When given a task, first create a todo list using write_todos tool - mark your first task as 'in_progress'
-2. EXECUTE: Work through each item, update status as you progress (mark completed, move next to 'in_progress')
-3. COMPLETE: Mark all items as completed and provide final answer
+1. **思考** - 使用 think 深入分析任务，识别关键要素、评估方案、规划执行步骤
+2. **规划** - 使用 write_todos 创建任务列表
+3. **执行** - 逐步完成任务，更新状态
+4. **完成** - 标记所有任务为完成并提供最终答案
 
-## `write_todos`
+## 工具使用说明
 
-Use this tool to create and manage a structured task list for your current work session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
+### think
+在开始任务前，先调用此工具进行系统性思考：
+- 拆解问题，识别关键要素
+- 评估方案，规划执行步骤
+- 发现新信息时，可再次调用更新思考
 
-## Usage Rules
+### write_todos
+用于追踪任务进度：
+- 任务开始时立即调用，将首个任务标记为 'in_progress'，其他任务标记为 'pending'
+- 完成每个步骤后，更新状态为 'completed'，将下一个任务标记为 'in_progress'
+- 保持至少有一个任务处于 'in_progress' 状态
+- 根据进展动态调整任务列表
 
-**Before Starting:**
-- Immediately call write_todos to create a todo list when you receive any task
-- List all steps you need to complete
-- Mark your first task as 'in_progress'
-
-**During Execution:**
-- After completing each step, update its status to 'completed' and mark the next task as 'in_progress'
-- Always keep at least one task in 'in_progress' (unless all completed)
-- Add new steps as you discover them; remove steps that are no longer relevant
-- Never batch up multiple steps before marking them as completed
-
-## Important Notes
-- The `write_todos` tool should never be called multiple times in parallel.
-- Don't be afraid to revise the To-Do list as you go. New information may reveal new tasks that need to be done, or old tasks that are irrelevant."""
+## 注意事项
+- 工具不要并行调用
+- 灵活调整任务列表，适应新信息"""
 
 
 class PlanSolveAgent(OpenAIFuncCallAgent):
@@ -59,3 +59,4 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
             max_tool_iterations=max_tool_iterations,
         )
         self.add_tool(write_todos)
+        self.add_tool(think)
