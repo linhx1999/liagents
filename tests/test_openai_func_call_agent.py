@@ -91,7 +91,7 @@ def mock_tool_registry(mock_tool):
 
 
 @pytest.fixture
-def func_call_agent(mock_client, empty_tool_registry):
+def func_call_agent(mock_client, mock_config, empty_tool_registry):
     """创建 OpenAIFuncCallAgent 实例（不带工具）"""
     return OpenAIFuncCallAgent(
         name="test_agent",
@@ -103,7 +103,7 @@ def func_call_agent(mock_client, empty_tool_registry):
 
 
 @pytest.fixture
-def func_call_agent_with_tools(mock_client, mock_tool_registry):
+def func_call_agent_with_tools(mock_client, mock_config, mock_tool_registry):
     """创建 OpenAIFuncCallAgent 实例（带工具）"""
     return OpenAIFuncCallAgent(
         name="test_agent_with_tools",
