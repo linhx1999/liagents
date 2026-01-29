@@ -5,6 +5,10 @@ import os
 from unittest.mock import Mock
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat import ChatCompletionMessage
+from openai.types.chat.chat_completion_message_tool_call import (
+    ChatCompletionMessageToolCall,
+    Function,
+)
 
 # 设置必需的环境变量
 os.environ["MODEL"] = "test-model"
@@ -135,19 +139,18 @@ def mock_chat_completion_without_tools():
 @pytest.fixture
 def mock_chat_completion_with_tool_call():
     """创建带工具调用的模拟响应"""
+    tool_call = ChatCompletionMessageToolCall(
+        id="call_123",
+        type="function",
+        function=Function(
+            name="test_tool",
+            arguments='{"param1": "value1"}',
+        ),
+    )
     message = ChatCompletionMessage(
         role="assistant",
         content=None,
-        tool_calls=[
-            {
-                "id": "call_123",
-                "type": "function",
-                "function": {
-                    "name": "test_tool",
-                    "arguments": '{"param1": "value1"}',
-                },
-            }
-        ],
+        tool_calls=[tool_call],
     )
     choice = Choice(index=0, message=message, finish_reason="tool_calls")
     completion = ChatCompletion(
