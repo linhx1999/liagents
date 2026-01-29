@@ -1,9 +1,15 @@
 """测试 OpenAIFuncCallAgent"""
 
 import pytest
+import os
 from unittest.mock import Mock
 from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat import ChatCompletionMessage
+
+# 设置必需的环境变量
+os.environ["MODEL"] = "test-model"
+os.environ["OPENAI_API_KEY"] = "test-api-key"
+os.environ["OPENAI_BASE_URL"] = "https://test.example.com"
 
 from liagents.agents.openai_func_call_agent import (
     OpenAIFuncCallAgent,
