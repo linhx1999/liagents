@@ -290,18 +290,6 @@ class TestInheritedMethods:
         assert chunks[0] == "流式回复"
 
 
-# ========== Todo 列表测试 ==========
-
-
-class TestTodoList:
-    """测试待办列表相关功能"""
-
-    def test_todo_list_initialized(self, plan_solve_agent):
-        """测试待办列表已初始化"""
-        assert hasattr(plan_solve_agent, "_todo_list")
-        assert plan_solve_agent._todo_list == []
-
-
 # ========== 运行测试 ==========
 
 

@@ -37,5 +37,4 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
             default_tool_choice=default_tool_choice,
             max_tool_iterations=max_tool_iterations,
         )
-        self._todo_list: list[dict[str, Any]] = []
         self.add_tool(write_todo)
