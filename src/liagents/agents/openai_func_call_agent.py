@@ -23,7 +23,7 @@ class OpenAIFuncCallAgent(Agent):
     def __init__(
         self,
         name: str = "OpenAIFuncCallAgent",
-        client: Client = None,
+        client: Client = Client(),
         system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: Optional["ToolRegistry"] = None,

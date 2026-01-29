@@ -11,7 +11,7 @@ class Agent(ABC):
     def __init__(
         self,
         name: str,
-        client: Client,
+        client: Client = Client(),
         system_prompt: str = "",
         config: Optional[Config] = None,
     ):
