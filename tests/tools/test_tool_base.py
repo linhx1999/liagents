@@ -53,6 +53,7 @@ class TestToolInit:
 
     def test_init_basic(self):
         """测试基本初始化"""
+
         def dummy_func():
             pass
 
@@ -71,15 +72,20 @@ class TestToolInit:
 
     def test_init_multiple_params(self):
         """测试多参数初始化"""
+
         def dummy_func(a, b, c):
             pass
 
         params = [
             ToolParameter(name="a", type="string", description="参数A"),
-            ToolParameter(name="b", type="integer", description="参数B", required=False, default=0),
+            ToolParameter(
+                name="b", type="integer", description="参数B", required=False, default=0
+            ),
             ToolParameter(name="c", type="boolean", description="参数C"),
         ]
-        test_tool = Tool(func=dummy_func, name="multi_tool", description="多参数工具", parameters=params)
+        test_tool = Tool(
+            func=dummy_func, name="multi_tool", description="多参数工具", parameters=params
+        )
 
         assert len(test_tool.get_parameters()) == 3
 
@@ -89,6 +95,7 @@ class TestToolGetParameters:
 
     def test_get_parameters(self):
         """测试获取参数"""
+
         def dummy_func(x, y):
             pass
 
@@ -96,7 +103,9 @@ class TestToolGetParameters:
             ToolParameter(name="x", type="string", description="X参数"),
             ToolParameter(name="y", type="integer", description="Y参数"),
         ]
-        test_tool = Tool(func=dummy_func, name="test", description="测试", parameters=params)
+        test_tool = Tool(
+            func=dummy_func, name="test", description="测试", parameters=params
+        )
 
         result = test_tool.get_parameters()
         assert len(result) == 2
@@ -105,6 +114,7 @@ class TestToolGetParameters:
 
     def test_get_parameters_empty(self):
         """测试无参数时获取"""
+
         def dummy_func():
             pass
 
@@ -118,6 +128,7 @@ class TestToolRun:
 
     def test_run_success(self):
         """测试成功执行"""
+
         def add(a, b):
             return a + b
 
@@ -132,6 +143,7 @@ class TestToolRun:
 
     def test_run_with_missing_params(self):
         """测试缺少参数时执行"""
+
         def add(a, b):
             return a + b
 
@@ -148,6 +160,7 @@ class TestToolRun:
 
     def test_run_with_extra_params(self):
         """测试带额外参数时执行"""
+
         def add(a, b):
             return a + b
 
@@ -162,20 +175,26 @@ class TestToolRun:
 
     def test_run_returns_string(self):
         """测试执行结果转换为字符串"""
+
         def get_value():
             return 42
 
-        test_tool = Tool(func=get_value, name="get_value", description="获取值", parameters=[])
+        test_tool = Tool(
+            func=get_value, name="get_value", description="获取值", parameters=[]
+        )
 
         result = test_tool.run({})
         assert result == "42"
 
     def test_run_exception(self):
         """测试执行异常"""
+
         def raise_error():
             raise ValueError("测试错误")
 
-        test_tool = Tool(func=raise_error, name="raise_error", description="报错工具", parameters=[])
+        test_tool = Tool(
+            func=raise_error, name="raise_error", description="报错工具", parameters=[]
+        )
 
         result = test_tool.run({})
         assert "执行出错" in result
@@ -187,6 +206,7 @@ class TestToolValidateParameters:
 
     def test_validate_valid_params(self):
         """测试有效参数验证"""
+
         def func(a, b):
             pass
 
@@ -201,6 +221,7 @@ class TestToolValidateParameters:
 
     def test_validate_missing_required(self):
         """测试缺少必需参数"""
+
         def func(a, b):
             pass
 
@@ -215,6 +236,7 @@ class TestToolValidateParameters:
 
     def test_validate_empty_params(self):
         """测试空参数验证"""
+
         def func():
             pass
 
@@ -228,11 +250,16 @@ class TestToolToDict:
 
     def test_to_dict_basic(self):
         """测试基本转换"""
+
         def func(a):
             pass
 
-        params = [ToolParameter(name="a", type="string", description="A参数", required=True)]
-        test_tool = Tool(func=func, name="test_tool", description="测试工具", parameters=params)
+        params = [
+            ToolParameter(name="a", type="string", description="A参数", required=True)
+        ]
+        test_tool = Tool(
+            func=func, name="test_tool", description="测试工具", parameters=params
+        )
 
         result = test_tool.to_dict()
 
@@ -244,12 +271,15 @@ class TestToolToDict:
 
     def test_to_dict_all_fields(self):
         """测试所有字段的转换"""
+
         def func(a, b, c):
             pass
 
         params = [
             ToolParameter(name="a", type="string", description="A", required=True),
-            ToolParameter(name="b", type="integer", description="B", required=False, default=10),
+            ToolParameter(
+                name="b", type="integer", description="B", required=False, default=10
+            ),
             ToolParameter(name="c", type="array", description="C", items_type="string"),
         ]
         test_tool = Tool(func=func, name="test", description="测试", parameters=params)
@@ -267,11 +297,18 @@ class TestToolToSchema:
 
     def test_to_schema_basic(self):
         """测试基本转换"""
+
         def func(query):
             pass
 
-        params = [ToolParameter(name="query", type="string", description="搜索查询", required=True)]
-        test_tool = Tool(func=func, name="search", description="搜索工具", parameters=params)
+        params = [
+            ToolParameter(
+                name="query", type="string", description="搜索查询", required=True
+            )
+        ]
+        test_tool = Tool(
+            func=func, name="search", description="搜索工具", parameters=params
+        )
 
         result = test_tool.to_schema()
 
@@ -282,12 +319,15 @@ class TestToolToSchema:
 
     def test_to_schema_parameters(self):
         """测试参数转换"""
+
         def func(a, b):
             pass
 
         params = [
             ToolParameter(name="a", type="string", description="字符串参数", required=True),
-            ToolParameter(name="b", type="integer", description="整数参数", required=False, default=0),
+            ToolParameter(
+                name="b", type="integer", description="整数参数", required=False, default=0
+            ),
         ]
         test_tool = Tool(func=func, name="test", description="测试", parameters=params)
 
@@ -303,10 +343,15 @@ class TestToolToSchema:
 
     def test_to_schema_array_type(self):
         """测试数组类型转换"""
+
         def func(items):
             pass
 
-        params = [ToolParameter(name="items", type="array", description="列表", items_type="string")]
+        params = [
+            ToolParameter(
+                name="items", type="array", description="列表", items_type="string"
+            )
+        ]
         test_tool = Tool(func=func, name="test", description="测试", parameters=params)
 
         result = test_tool.to_schema()
@@ -321,6 +366,7 @@ class TestToolStr:
 
     def test_str_representation(self):
         """测试字符串表示"""
+
         def func():
             pass
 
@@ -331,6 +377,7 @@ class TestToolStr:
 
     def test_repr(self):
         """测试 repr"""
+
         def func():
             pass
 
@@ -345,6 +392,7 @@ class TestToolDecorator:
 
     def test_decorator_basic(self):
         """测试基本装饰器使用"""
+
         @tool
         def search(query: str) -> str:
             """搜索工具"""
@@ -356,10 +404,10 @@ class TestToolDecorator:
 
     def test_decorator_with_annotated_params(self):
         """测试带 Annotated 参数的装饰器"""
+
         @tool
         def calculate(
-            expression: Annotated[str, "计算表达式"],
-            precision: Annotated[int, "精度"] = 2
+            expression: Annotated[str, "计算表达式"], precision: Annotated[int, "精度"] = 2
         ) -> str:
             """计算工具"""
             return expression
@@ -383,6 +431,7 @@ class TestToolDecorator:
 
     def test_decorator_type_inference(self):
         """测试类型推断"""
+
         @tool
         def types_demo(
             s: str,
@@ -405,6 +454,7 @@ class TestToolDecorator:
 
     def test_decorator_no_docstring(self):
         """测试没有 docstring 的情况"""
+
         @tool
         def no_doc():
             return "result"
@@ -413,6 +463,7 @@ class TestToolDecorator:
 
     def test_decorator_execute(self):
         """测试装饰器创建的 tool 执行"""
+
         @tool
         def add(a: int, b: int) -> int:
             """加法工具"""
@@ -423,6 +474,7 @@ class TestToolDecorator:
 
     def test_decorator_with_list_generic(self):
         """测试带 List 泛型的参数"""
+
         @tool
         def process_items(items: list[str]) -> str:
             """处理列表"""
@@ -434,6 +486,7 @@ class TestToolDecorator:
 
     def test_decorator_with_dict(self):
         """测试 dict 类型参数"""
+
         @tool
         def update_config(config: dict) -> str:
             """更新配置"""

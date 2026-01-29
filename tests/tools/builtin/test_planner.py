@@ -119,7 +119,7 @@ class TestPlannerTool:
                 "priority": "high",
                 "subtasks": [
                     {"content": "子任务1", "status": "pending"},
-                ]
+                ],
             }
         ]
 
@@ -163,10 +163,7 @@ class TestPlannerToolEdgeCases:
 
     def test_run_with_very_long_list(self):
         """测试很长的列表"""
-        todo_list = [
-            {"content": f"任务{i}", "status": "pending"}
-            for i in range(100)
-        ]
+        todo_list = [{"content": f"任务{i}", "status": "pending"} for i in range(100)]
 
         result = write_todos.run({"todo_list": todo_list})
 

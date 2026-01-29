@@ -16,6 +16,7 @@ def empty_registry():
 @pytest.fixture
 def sample_tool():
     """创建示例工具"""
+
     def dummy_func(x):
         return x
 
@@ -23,15 +24,14 @@ def sample_tool():
         func=dummy_func,
         name="sample_tool",
         description="示例工具",
-        parameters=[
-            ToolParameter(name="x", type="string", description="输入参数")
-        ]
+        parameters=[ToolParameter(name="x", type="string", description="输入参数")],
     )
 
 
 @pytest.fixture
 def another_tool():
     """创建另一个工具"""
+
     def dummy_func(a, b):
         return a + b
 
@@ -42,7 +42,7 @@ def another_tool():
         parameters=[
             ToolParameter(name="a", type="integer", description="参数A"),
             ToolParameter(name="b", type="integer", description="参数B"),
-        ]
+        ],
     )
 
 
@@ -141,6 +141,7 @@ class TestToolRegistryExecuteTool:
 
     def test_execute_tool_with_error(self, empty_registry):
         """测试执行工具出错"""
+
         def error_func():
             raise ValueError("工具错误")
 
@@ -168,7 +169,9 @@ class TestToolRegistryGetToolsDescription:
 
         assert result == "暂无可用工具"
 
-    def test_get_description_with_tools(self, empty_registry, sample_tool, another_tool):
+    def test_get_description_with_tools(
+        self, empty_registry, sample_tool, another_tool
+    ):
         """测试带工具的描述"""
         empty_registry.register_tool(sample_tool)
         empty_registry.register_tool(another_tool)
@@ -251,6 +254,7 @@ class TestToolRegistryIntegration:
 
     def test_full_workflow(self, empty_registry):
         """测试完整工作流"""
+
         def add(a, b):
             return a + b
 
@@ -264,7 +268,7 @@ class TestToolRegistryIntegration:
             parameters=[
                 ToolParameter(name="a", type="integer", description="A"),
                 ToolParameter(name="b", type="integer", description="B"),
-            ]
+            ],
         )
 
         multiply_tool = Tool(
@@ -274,7 +278,7 @@ class TestToolRegistryIntegration:
             parameters=[
                 ToolParameter(name="a", type="integer", description="A"),
                 ToolParameter(name="b", type="integer", description="B"),
-            ]
+            ],
         )
 
         # 注册工具
@@ -319,6 +323,7 @@ class TestToolRegistryEdgeCases:
 
     def test_special_characters_in_tool_name(self, empty_registry):
         """测试特殊字符工具名"""
+
         def func():
             return "ok"
 

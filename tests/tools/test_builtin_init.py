@@ -38,7 +38,12 @@ class TestBuiltinInit:
         """测试 __all__ 导出"""
         from liagents.tools.builtin import __all__
 
-        from liagents.tools.builtin import python_calculator, think, write_todos, tavily_search
+        from liagents.tools.builtin import (
+            python_calculator,
+            think,
+            write_todos,
+            tavily_search,
+        )
 
         assert python_calculator in __all__
         assert think in __all__

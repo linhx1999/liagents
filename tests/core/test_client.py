@@ -65,7 +65,9 @@ class TestChat:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = "你好！有什么可以帮助你的吗？"
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response):
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ):
             result = client.chat(messages)
             assert result == "你好！有什么可以帮助你的吗？"
 
@@ -78,7 +80,9 @@ class TestChat:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = "测试回复"
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response) as mock_create:
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             client.chat(messages, temperature=0.1)
             call_kwargs = mock_create.call_args[1]
             assert call_kwargs["temperature"] == 0.1
@@ -92,7 +96,9 @@ class TestChat:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = "测试回复"
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response) as mock_create:
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             client.chat(messages, model="gpt-4")
             call_kwargs = mock_create.call_args[1]
             assert call_kwargs["model"] == "gpt-4"
@@ -106,7 +112,9 @@ class TestChat:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = "测试回复"
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response) as mock_create:
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             client.chat(messages, max_completion_tokens=100)
             call_kwargs = mock_create.call_args[1]
             assert call_kwargs["max_completion_tokens"] == 100
@@ -116,7 +124,11 @@ class TestChat:
         client = Client()
         messages = [{"role": "user", "content": "测试"}]
 
-        with patch.object(client._client.chat.completions, "create", side_effect=Exception("API Error")):
+        with patch.object(
+            client._client.chat.completions,
+            "create",
+            side_effect=Exception("API Error"),
+        ):
             with pytest.raises(RuntimeError, match="调用LLM API时发生错误"):
                 client.chat(messages)
 
@@ -129,9 +141,11 @@ class TestChat:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = None
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response):
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ):
             result = client.chat(messages)
-            assert result is None
+            assert result == ""  # 空响应返回空字符串而不是 None
 
 
 class TestStreamChat:
@@ -180,7 +194,11 @@ class TestStreamChat:
         client = Client()
         messages = [{"role": "user", "content": "测试"}]
 
-        with patch.object(client._client.chat.completions, "create", side_effect=Exception("Stream Error")):
+        with patch.object(
+            client._client.chat.completions,
+            "create",
+            side_effect=Exception("Stream Error"),
+        ):
             with pytest.raises(RuntimeError, match="调用LLM API时发生错误"):
                 list(client.stream_chat(messages))
 
@@ -208,7 +226,9 @@ class TestChatWithTools:
         mock_response.choices[0].message.content = "工具执行结果"
         mock_response.choices[0].message.tool_calls = None
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response):
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ):
             result = client.chat_with_tools(messages, tools)
             assert result.choices[0].message.content == "工具执行结果"
 
@@ -216,13 +236,17 @@ class TestChatWithTools:
         """测试带工具选择的聊天"""
         client = Client()
         messages = [{"role": "user", "content": "使用工具"}]
-        tools = [{"type": "function", "function": {"name": "test_tool", "parameters": {}}}]
+        tools = [
+            {"type": "function", "function": {"name": "test_tool", "parameters": {}}}
+        ]
 
         mock_response = Mock()
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = "结果"
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response) as mock_create:
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             client.chat_with_tools(messages, tools, tool_choice="none")
             call_kwargs = mock_create.call_args[1]
             assert call_kwargs["tool_choice"] == "none"
@@ -236,20 +260,31 @@ class TestChatWithTools:
         mock_response.choices = [Mock()]
         mock_response.choices[0].message.content = "你好"
 
-        with patch.object(client._client.chat.completions, "create", return_value=mock_response) as mock_create:
+        with patch.object(
+            client._client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             result = client.chat_with_tools(messages, None)
             call_kwargs = mock_create.call_args[1]
             # 当没有 tools 时，不应该传递 tools 和 tool_choice 参数
             assert call_kwargs.get("tools") is None or call_kwargs.get("tools") == []
-            assert call_kwargs.get("tool_choice") is None or call_kwargs.get("tool_choice") == "auto"
+            assert (
+                call_kwargs.get("tool_choice") is None
+                or call_kwargs.get("tool_choice") == "auto"
+            )
 
     def test_chat_with_tools_error(self):
         """测试带工具聊天的错误处理"""
         client = Client()
         messages = [{"role": "user", "content": "使用工具"}]
-        tools = [{"type": "function", "function": {"name": "test_tool", "parameters": {}}}]
+        tools = [
+            {"type": "function", "function": {"name": "test_tool", "parameters": {}}}
+        ]
 
-        with patch.object(client._client.chat.completions, "create", side_effect=Exception("API Error")):
+        with patch.object(
+            client._client.chat.completions,
+            "create",
+            side_effect=Exception("API Error"),
+        ):
             with pytest.raises(RuntimeError, match="调用LLM API时发生错误"):
                 client.chat_with_tools(messages, tools)
 
