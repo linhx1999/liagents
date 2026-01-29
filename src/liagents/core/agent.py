@@ -6,6 +6,7 @@ from .client import Client
 from .config import Config
 from ..tools.registry import ToolRegistry
 
+
 class Agent(ABC):
     """Agent基类"""
 
