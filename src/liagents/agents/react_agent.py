@@ -1,4 +1,4 @@
-from typing import Any, Optional, Iterator, TYPE_CHECKING
+from typing import Optional, Iterator, TYPE_CHECKING
 import re
 import json
 
@@ -22,6 +22,7 @@ class ReActAgent(Agent):
         system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: ToolRegistry = ToolRegistry(),
+        debug: bool = False,
     ):
         """
         初始化ReActAgent
@@ -32,8 +33,9 @@ class ReActAgent(Agent):
             system_prompt: 系统提示词
             config: 配置对象
             tool_registry: 工具注册表（可选，如果提供则启用工具调用）
+            debug: 是否启用调试模式，打印中间状态
         """
-        super().__init__(name, client, system_prompt, config, tool_registry)
+        super().__init__(name, client, system_prompt, config, tool_registry, debug)
 
     def _get_enhanced_system_prompt(self) -> str:
         """构建增强的系统提示词，包含工具信息"""
@@ -125,6 +127,9 @@ class ReActAgent(Agent):
         Returns:
             Agent响应
         """
+        self._debug_print("开始执行", f"用户输入: {user_input}")
+        self._debug_print("配置", f"max_tool_iterations: {max_tool_iterations}")
+
         # 构建消息列表
         messages = []
 
@@ -145,20 +150,27 @@ class ReActAgent(Agent):
         final_response = ""
 
         while current_iteration < max_tool_iterations:
+            self._debug_print("迭代", f"第 {current_iteration + 1}/{max_tool_iterations} 次")
+            self._debug_print("消息列表", f"共 {len(messages)} 条消息")
+
             # 调用LLM
             response = self.client.chat(messages, **kwargs)
+            self._debug_print("LLM响应", response[:500] + "..." if len(response) > 500 else response)
 
             # 检查是否有工具调用
             tool_calls = self._parse_tool_calls(response)
 
             if tool_calls:
+                self._debug_print("工具调用", f"发现 {len(tool_calls)} 个工具调用")
                 # 执行所有工具调用并收集结果
                 tool_results = []
 
                 for call in tool_calls:
+                    self._debug_print("执行工具", f"工具名: {call['tool_name']}, 参数: {call['arguments']}")
                     result = self._execute_tool_call(
                         call["tool_name"], call["arguments"]
                     )
+                    self._debug_print("工具结果", result[:300] + "..." if len(result) > 300 else result)
                     tool_results.append(result)
                     # 从响应中移除工具调用标记
 
@@ -183,7 +195,10 @@ class ReActAgent(Agent):
 
         # 如果超过最大迭代次数，获取最后一次回答
         if current_iteration >= max_tool_iterations and not final_response:
+            self._debug_print("迭代超限", "获取最后一次回答")
             final_response = self.client.chat(messages, **kwargs)
+
+        self._debug_print("最终响应", final_response[:500] + "..." if len(final_response) > 500 else final_response)
 
         # 保存到历史记录
         self.add_message(Message("user", user_input))

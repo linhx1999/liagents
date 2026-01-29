@@ -18,6 +18,7 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
         tool_registry: ToolRegistry = ToolRegistry(),
         tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 20,
+        debug: bool = False,
     ):
         super().__init__(
             name=name,
@@ -27,6 +28,7 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
             tool_registry=tool_registry,
             tool_choice=tool_choice,
             max_tool_iterations=max_tool_iterations,
+            debug=debug,
         )
         self.add_tool(write_todos)
         self.add_tool(think)

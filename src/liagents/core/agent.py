@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any, Optional
+from pprint import pformat
 
 from .message import Message
 from .client import Client
@@ -17,6 +18,7 @@ class Agent(ABC):
         system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: ToolRegistry = ToolRegistry(),
+        debug: bool = False,
     ):
         self.name = name
         self.client = client
@@ -24,6 +26,14 @@ class Agent(ABC):
         self.config = config or Config()
         self._history: list[Message] = []
         self.tool_registry = tool_registry
+        self.debug = debug
+
+    def _debug_print(self, title: str, content: Any):
+        """打印调试信息"""
+        if self.debug:
+            print(f"\n=== [{self.name}] {title} ===")
+            content_str = pformat(content) if not isinstance(content, str) else content
+            print(content_str)
 
     @abstractmethod
     def run(self, input_text: str, **kwargs) -> str:

@@ -20,8 +20,9 @@ class OpenAIFuncCallAgent(Agent):
         tool_registry: ToolRegistry = ToolRegistry(),
         tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 10,
+        debug: bool = False,
     ):
-        super().__init__(name, client, system_prompt.strip(), config, tool_registry)
+        super().__init__(name, client, system_prompt.strip(), config, tool_registry, debug)
         self.tool_choice = tool_choice
         self.max_tool_iterations = max_tool_iterations
 
@@ -134,8 +135,13 @@ class OpenAIFuncCallAgent(Agent):
         """
         执行函数调用范式的对话流程
         """
+        self._debug_print("开始执行", f"用户输入: {user_input}")
+        self._debug_print("配置", f"iterations_limit: {max_tool_iterations or self.max_tool_iterations}, tool_choice: {tool_choice or self.tool_choice}")
+
         messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()
+        self._debug_print("工具Schema", f"共 {len(tool_schemas)} 个工具")
+
         iterations_limit = (
             max_tool_iterations
             if max_tool_iterations is not None
@@ -148,6 +154,9 @@ class OpenAIFuncCallAgent(Agent):
         final_response = ""
 
         while current_iteration < iterations_limit:
+            self._debug_print("迭代", f"第 {current_iteration + 1}/{iterations_limit} 次")
+            self._debug_print("消息列表", f"共 {len(messages)} 条消息")
+
             response = self.client.chat_with_tools(
                 messages,
                 tools=tool_schemas,
@@ -164,6 +173,7 @@ class OpenAIFuncCallAgent(Agent):
             # 将 assistant 消息添加到历史
             if tool_calls:
                 # 有工具调用时，包含 tool_calls 字段
+                self._debug_print("工具调用", f"发现 {len(tool_calls)} 个工具调用")
                 messages.append(
                     {
                         "role": "assistant",
@@ -191,7 +201,9 @@ class OpenAIFuncCallAgent(Agent):
                 arguments = self._parse_function_call_arguments(
                     tool_call.function.arguments
                 )
+                self._debug_print("执行工具", f"工具名: {tool_name}, 参数: {arguments}")
                 result = self._execute_tool_call(tool_name, arguments)
+                self._debug_print("工具结果", result[:300] + "..." if len(result) > 300 else result)
                 messages.append(
                     {
                         "role": "tool",
@@ -207,9 +219,11 @@ class OpenAIFuncCallAgent(Agent):
 
             # 没有工具调用时，使用 assistant 的 content 作为最终响应
             final_response = assistant_message.content or ""
+            self._debug_print("最终响应", final_response[:500] + "..." if len(final_response) > 500 else final_response)
             break
 
         if current_iteration >= iterations_limit and not final_response:
+            self._debug_print("迭代超限", "获取最后一次回答")
             final_choice = self.client.chat_with_tools(
                 messages,
                 tools=tool_schemas,
@@ -231,6 +245,7 @@ class OpenAIFuncCallAgent(Agent):
         tool_choice: Optional[Union[str, dict]] = None,
         **kwargs,
     ) -> Iterator[str]:
+        self._debug_print("开始执行(stream)", f"用户输入: {user_input}")
         result = self.run(
             user_input,
             max_tool_iterations=max_tool_iterations,
