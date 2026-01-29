@@ -22,7 +22,9 @@ class OpenAIFuncCallAgent(Agent):
         max_tool_iterations: int = 10,
         debug: bool = False,
     ):
-        super().__init__(name, client, system_prompt.strip(), config, tool_registry, debug)
+        super().__init__(
+            name, client, system_prompt.strip(), config, tool_registry, debug
+        )
         self.tool_choice = tool_choice
         self.max_tool_iterations = max_tool_iterations
 
@@ -136,7 +138,10 @@ class OpenAIFuncCallAgent(Agent):
         执行函数调用范式的对话流程
         """
         self._debug_print("开始执行", user_input)
-        self._debug_print("配置", f"iterations_limit: {max_tool_iterations or self.max_tool_iterations}, tool_choice: {tool_choice or self.tool_choice}")
+        self._debug_print(
+            "配置",
+            f"iterations_limit: {max_tool_iterations or self.max_tool_iterations}, tool_choice: {tool_choice or self.tool_choice}",
+        )
 
         messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()

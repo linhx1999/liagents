@@ -150,12 +150,16 @@ class ReActAgent(Agent):
         final_response = ""
 
         while current_iteration < max_tool_iterations:
-            self._debug_print("迭代", f"第 {current_iteration + 1}/{max_tool_iterations} 次")
+            self._debug_print(
+                "迭代", f"第 {current_iteration + 1}/{max_tool_iterations} 次"
+            )
             self._debug_print("消息列表", f"共 {len(messages)} 条消息")
 
             # 调用LLM
             response = self.client.chat(messages, **kwargs)
-            self._debug_print("LLM响应", response[:500] + "..." if len(response) > 500 else response)
+            self._debug_print(
+                "LLM响应", response[:500] + "..." if len(response) > 500 else response
+            )
 
             # 检查是否有工具调用
             tool_calls = self._parse_tool_calls(response)
@@ -166,11 +170,15 @@ class ReActAgent(Agent):
                 tool_results = []
 
                 for call in tool_calls:
-                    self._debug_print("执行工具", f"工具名: {call['tool_name']}, 参数: {call['arguments']}")
+                    self._debug_print(
+                        "执行工具", f"工具名: {call['tool_name']}, 参数: {call['arguments']}"
+                    )
                     result = self._execute_tool_call(
                         call["tool_name"], call["arguments"]
                     )
-                    self._debug_print("工具结果", result[:300] + "..." if len(result) > 300 else result)
+                    self._debug_print(
+                        "工具结果", result[:300] + "..." if len(result) > 300 else result
+                    )
                     tool_results.append(result)
                     # 从响应中移除工具调用标记
 
@@ -198,7 +206,12 @@ class ReActAgent(Agent):
             self._debug_print("迭代超限", "获取最后一次回答")
             final_response = self.client.chat(messages, **kwargs)
 
-        self._debug_print("最终响应", final_response[:500] + "..." if len(final_response) > 500 else final_response)
+        self._debug_print(
+            "最终响应",
+            final_response[:500] + "..."
+            if len(final_response) > 500
+            else final_response,
+        )
 
         # 保存到历史记录
         self.add_message(Message("user", user_input))

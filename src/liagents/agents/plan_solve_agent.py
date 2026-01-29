@@ -3,8 +3,7 @@ from typing import Optional, Union
 from ..core.config import Config
 from ..core.client import Client
 from ..tools.registry import ToolRegistry
-from ..tools.builtin.planner import write_todos
-from ..tools.builtin.think_tool import think
+from ..tools.builtin import think, write_todos
 from .openai_func_call_agent import OpenAIFuncCallAgent
 
 

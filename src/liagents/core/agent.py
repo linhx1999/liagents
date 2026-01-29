@@ -42,7 +42,6 @@ class Agent(ABC):
         # 使用更清晰的格式
         print(f"[{self.name}] {title}: {content_str}")
 
-
     @abstractmethod
     def run(self, input_text: str, **kwargs) -> str:
         """运行Agent"""
