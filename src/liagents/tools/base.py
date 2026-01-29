@@ -86,9 +86,11 @@ class Tool:
         required = []
 
         for param in self.get_parameters():
-            prop = {"type": param.type, "description": param.description}
+            prop: Dict[str, Any] = {}
+            prop["type"] = param.type
+            prop["description"] = param.description
             if param.default is not None:
-                prop["description"] = f"{param.description} (默认: {param.default})"
+                prop["description"] += f" (默认: {param.default})"
             if param.type == "array":
                 prop["items"] = {"type": param.items_type}
             properties[param.name] = prop
