@@ -9,7 +9,6 @@ from liagents.agents.plan_solve_agent import PlanSolveAgent
 
 def test_plan_solve_todo_tracking():
     """测试 PlanSolveAgent 的待办列表追踪功能"""
-    print("\n" + "=" * 60)
     print("PlanSolveAgent 待办列表追踪测试")
 
     agent = PlanSolveAgent(debug=True)

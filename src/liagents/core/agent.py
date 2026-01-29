@@ -30,10 +30,18 @@ class Agent(ABC):
 
     def _debug_print(self, title: str, content: Any):
         """打印调试信息"""
-        if self.debug:
-            print(f"\n=== [{self.name}] {title} ===")
-            content_str = pformat(content) if not isinstance(content, str) else content
-            print(content_str)
+        if not self.debug:
+            return
+
+        # 格式化内容
+        if isinstance(content, dict):
+            content_str = pformat(content, indent=2)
+        else:
+            content_str = str(content)
+
+        # 使用更清晰的格式
+        print(f"[{self.name}] {title}: {content_str}")
+
 
     @abstractmethod
     def run(self, input_text: str, **kwargs) -> str:

@@ -135,12 +135,12 @@ class OpenAIFuncCallAgent(Agent):
         """
         执行函数调用范式的对话流程
         """
-        self._debug_print("开始执行", f"用户输入: {user_input}")
+        self._debug_print("开始执行", user_input)
         self._debug_print("配置", f"iterations_limit: {max_tool_iterations or self.max_tool_iterations}, tool_choice: {tool_choice or self.tool_choice}")
 
         messages = self._build_messages(user_input)
         tool_schemas = self._build_tool_schemas()
-        self._debug_print("工具Schema", f"共 {len(tool_schemas)} 个工具")
+        self._debug_print("工具", f"共 {len(tool_schemas)} 个工具")
 
         iterations_limit = (
             max_tool_iterations
@@ -201,9 +201,9 @@ class OpenAIFuncCallAgent(Agent):
                 arguments = self._parse_function_call_arguments(
                     tool_call.function.arguments
                 )
-                self._debug_print("执行工具", f"工具名: {tool_name}, 参数: {arguments}")
+                self._debug_print("执行工具", f"{tool_name}, {arguments}")
                 result = self._execute_tool_call(tool_name, arguments)
-                self._debug_print("工具结果", result[:300] + "..." if len(result) > 300 else result)
+                self._debug_print("工具结果", result)
                 messages.append(
                     {
                         "role": "tool",
@@ -219,7 +219,7 @@ class OpenAIFuncCallAgent(Agent):
 
             # 没有工具调用时，使用 assistant 的 content 作为最终响应
             final_response = assistant_message.content or ""
-            self._debug_print("最终响应", final_response[:500] + "..." if len(final_response) > 500 else final_response)
+            self._debug_print("最终响应", f"\n{final_response}")
             break
 
         if current_iteration >= iterations_limit and not final_response:
