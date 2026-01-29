@@ -160,7 +160,7 @@ class TestPlanSolveAgentInit:
         """测试默认 tool_choice"""
         agent = PlanSolveAgent(name="test_agent", client=mock_client)
 
-        assert agent.default_tool_choice == "auto"
+        assert agent.tool_choice == "auto"
 
 
 # ========== 默认工具测试 ==========

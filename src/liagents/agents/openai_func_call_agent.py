@@ -18,11 +18,11 @@ class OpenAIFuncCallAgent(Agent):
         system_prompt: str = "",
         config: Optional[Config] = None,
         tool_registry: ToolRegistry = ToolRegistry(),
-        default_tool_choice: Union[str, dict] = "auto",
+        tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 10,
     ):
         super().__init__(name, client, system_prompt.strip(), config, tool_registry)
-        self.default_tool_choice = default_tool_choice
+        self.tool_choice = tool_choice
         self.max_tool_iterations = max_tool_iterations
 
     def _build_messages(self, user_input: str) -> list[dict[str, Any]]:
@@ -142,7 +142,7 @@ class OpenAIFuncCallAgent(Agent):
             else self.max_tool_iterations
         )
         effective_tool_choice: Union[str, dict] = (
-            tool_choice if tool_choice is not None else self.default_tool_choice
+            tool_choice if tool_choice is not None else self.tool_choice
         )
         current_iteration = 0
         final_response = ""

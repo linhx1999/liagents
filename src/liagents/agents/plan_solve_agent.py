@@ -46,7 +46,7 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
         system_prompt: str = DEFAULT_PLAN_SOLVE_PROMPT,
         config: Optional[Config] = None,
         tool_registry: ToolRegistry = ToolRegistry(),
-        default_tool_choice: Union[str, dict] = "auto",
+        tool_choice: Union[str, dict] = "auto",
         max_tool_iterations: int = 20,
     ):
         super().__init__(
@@ -55,7 +55,7 @@ class PlanSolveAgent(OpenAIFuncCallAgent):
             system_prompt=system_prompt,
             config=config,
             tool_registry=tool_registry,
-            default_tool_choice=default_tool_choice,
+            tool_choice=tool_choice,
             max_tool_iterations=max_tool_iterations,
         )
         self.add_tool(write_todos)

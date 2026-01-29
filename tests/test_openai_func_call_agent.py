@@ -179,7 +179,7 @@ class TestOpenAIFuncCallAgentInit:
         assert agent.system_prompt == "测试提示词"
         assert agent.tool_registry is not None
         assert agent._history == []
-        assert agent.default_tool_choice == "auto"
+        assert agent.tool_choice == "auto"
         assert agent.max_tool_iterations == 10
 
     def test_init_without_system_prompt(self, mock_client):
@@ -199,14 +199,14 @@ class TestOpenAIFuncCallAgentInit:
         assert agent.tool_registry == mock_tool_registry
 
     def test_init_with_custom_tool_choice(self, mock_client):
-        """测试自定义 default_tool_choice"""
+        """测试自定义 tool_choice"""
         agent = OpenAIFuncCallAgent(
             name="test_agent",
             client=mock_client,
-            default_tool_choice="none",
+            tool_choice="none",
         )
 
-        assert agent.default_tool_choice == "none"
+        assert agent.tool_choice == "none"
 
     def test_init_with_custom_max_iterations(self, mock_client):
         """测试自定义 max_tool_iterations"""
