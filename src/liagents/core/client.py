@@ -1,8 +1,13 @@
 import os
 from openai import OpenAI
-from typing import List, Dict, Optional, Iterator, Union, Any, Generator
+from typing import Optional, Iterator, Any, Generator
 from collections import defaultdict
 from openai.types.chat.chat_completion import ChatCompletion
+from openai.types.chat import (
+    ChatCompletionMessageParam,
+    ChatCompletionToolUnionParam,
+    ChatCompletionToolChoiceOptionParam,
+)
 
 
 class Client:
@@ -34,7 +39,7 @@ class Client:
 
     def stream_chat(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         **kwargs,
     ) -> Iterator[str]:
         """
@@ -74,9 +79,9 @@ class Client:
 
     def stream_chat_with_tools(
         self,
-        messages: list[dict[str, Any]],
-        tools: Optional[list[dict[str, Any]]] = None,
-        tool_choice: Union[str, dict] = "auto",
+        messages: list[ChatCompletionMessageParam],
+        tools: list[ChatCompletionToolUnionParam] | None = None,
+        tool_choice: ChatCompletionToolChoiceOptionParam = "auto",
         **kwargs,
     ) -> tuple[Generator[str, None, None], list[dict[str, Any]]]:
         # 1. 参数构建
@@ -106,7 +111,7 @@ class Client:
             final_tool_calls: list[dict[str, Any]] = []
 
             # 内部缓冲区，用于按 index 组装碎片
-            tool_buffer = defaultdict(
+            tool_buffer: dict[int, dict[str, Any]] = defaultdict(
                 lambda: {
                     "id": None,
                     "function": {"name": "", "arguments": ""},
@@ -133,13 +138,19 @@ class Client:
                             # 1. ID 和 Name 通常只在首个 chunk 出现
                             if tool_chunk.id:
                                 tool_buffer[idx]["id"] = tool_chunk.id
-                            if tool_chunk.function and tool_chunk.function.name:
+                            if (
+                                tool_chunk.function is not None
+                                and tool_chunk.function.name is not None
+                            ):
                                 tool_buffer[idx]["function"][
                                     "name"
                                 ] = tool_chunk.function.name
 
                             # 2. Arguments 会分散在多个 chunk 中，需要拼接
-                            if tool_chunk.function and tool_chunk.function.arguments:
+                            if (
+                                tool_chunk.function is not None
+                                and tool_chunk.function.arguments is not None
+                            ):
                                 tool_buffer[idx]["function"][
                                     "arguments"
                                 ] += tool_chunk.function.arguments
@@ -152,13 +163,14 @@ class Client:
                     for idx in sorted_indices:
                         tool_data = tool_buffer[idx]
                         # 这里构造成标准的 tool_call 结构
+                        func_data = tool_data.get("function", {})
                         final_tool_calls.append(
                             {
-                                "id": tool_data["id"],
+                                "id": tool_data.get("id"),
                                 "type": "function",
                                 "function": {
-                                    "name": tool_data["function"]["name"],
-                                    "arguments": tool_data["function"]["arguments"],
+                                    "name": func_data.get("name", ""),
+                                    "arguments": func_data.get("arguments", ""),
                                 },
                             }
                         )
@@ -171,7 +183,7 @@ class Client:
 
     def chat(
         self,
-        messages: list[dict[str, str]],
+        messages: list[ChatCompletionMessageParam],
         **kwargs,
     ) -> str:
         try:
@@ -185,15 +197,15 @@ class Client:
                 stream=False,
                 **kwargs,
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content or ""
         except Exception as e:
             raise RuntimeError(f"调用LLM API时发生错误: {e}")
 
     def chat_with_tools(
         self,
-        messages: list[dict[str, Any]],
-        tools: Optional[list[dict[str, Any]]] = None,
-        tool_choice: Union[str, dict] = "auto",
+        messages: list[ChatCompletionMessageParam],
+        tools: list[ChatCompletionToolUnionParam] | None = None,
+        tool_choice: ChatCompletionToolChoiceOptionParam = "auto",
         **kwargs,
     ) -> ChatCompletion:
         """
@@ -209,18 +221,23 @@ class Client:
             完整的OpenAI响应对象
         """
         try:
-            response = self._client.chat.completions.create(
-                messages=messages,
-                model=kwargs.pop("model", self._model),
-                temperature=kwargs.pop("temperature", self._temperature),
-                max_completion_tokens=kwargs.pop(
+            # 构建参数字典，处理可选的 tools 参数
+            create_params = {
+                "messages": messages,
+                "model": kwargs.pop("model", self._model),
+                "temperature": kwargs.pop("temperature", self._temperature),
+                "max_completion_tokens": kwargs.pop(
                     "max_completion_tokens", self._max_completion_tokens
                 ),
-                tools=tools,
-                tool_choice=tool_choice,
-                stream=False,
+                "tool_choice": tool_choice,
+                "stream": False,
                 **kwargs,
-            )
+            }
+            # 只有当 tools 不为 None 时才添加到参数中
+            if tools is not None:
+                create_params["tools"] = tools
+
+            response = self._client.chat.completions.create(**create_params)
             return response
         except Exception as e:
             raise RuntimeError(f"调用LLM API时发生错误: {e}")
