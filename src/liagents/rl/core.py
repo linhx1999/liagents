@@ -156,7 +156,6 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
 
     def train(self):
         """开始SFT训练"""
-        from transformers import BitsAndBytesConfig
         from trl import SFTConfig, SFTTrainer
 
         if self.model is None:
