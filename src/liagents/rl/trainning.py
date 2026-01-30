@@ -150,7 +150,7 @@ class RLTrainer:
 
         format_type = format_type.lower().strip()
         if format_type in ["sft", "rl"]:
-            dataset = create_dataset(
+            self.dataset = create_dataset(
                 dataset_name_or_path=dataset_name_or_path,
                 format_type=format_type,
                 max_samples=max_samples,
@@ -167,7 +167,7 @@ class RLTrainer:
             "status": "success",
             "format_type": format_type,
             "split": split,
-            "dataset_size": len(dataset),
-            "sample_examples": dataset[:3] if len(dataset) > 3 else []
+            "dataset_size": len(self.dataset),
+            "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else []
         }
         return result
