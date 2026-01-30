@@ -4,7 +4,9 @@ from liagents.rl import RLTrainer
 rl_trainer = RLTrainer("/home/linhx/models/Qwen3-0.6B")
 
 # 加载数据集
-rl_trainer.load_dataset("/home/linhx/codebase/liagents/examples/datasets/gsm8k")
+rl_trainer.load_dataset(
+    "/home/linhx/codebase/liagents/examples/datasets/gsm8k", max_samples=32
+)
 
 # SFT训练
 result = rl_trainer.train()
