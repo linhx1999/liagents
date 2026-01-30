@@ -162,7 +162,6 @@ class RLTrainer:
                 lora_alpha=lora_alpha,
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
-                custom_dataset=custom_dataset,
                 use_tensorboard=use_tensorboard,
             )
         # elif algorithm == "grpo":
@@ -269,7 +268,6 @@ class RLTrainer:
 
         # 开始训练
         print("\n开始SFT训练...")
-        print(f"{'='*80}\n")
         trainer.train()
         print(f"\n{'='*80}")
         print("SFT训练完成")
