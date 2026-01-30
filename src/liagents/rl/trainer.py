@@ -35,97 +35,55 @@ class RLTrainer:
     - 评估模型 (evaluate)
     """
 
-    # 模型配置
+    # 模型和输出配置
     model_name_or_path: str
-    use_lora: bool
-    lora_rank: int
-    lora_alpha: int
-
-    # 训练配置
-    algorithm: str
-    num_epochs: int
-    learning_rate: float
-    batch_size: int
-    max_samples: int  # -1 表示全量使用数据集
-
-    # 精度配置
-    use_fp16: bool
-    use_bf16: bool
-
-    # 输出配置
+    tokenizer: Any = None
     output_dir: str
 
+
+    # 训练配置
+    algorithm: str = "sft"
+    num_epochs: int = 2
+    learning_rate: float = 5e-5
+    batch_size: int = 4
+    max_samples: int = -1  # -1 表示全量使用数据集
+
+    # LoRA配置
+    use_lora: bool = True
+    lora_rank: int = 8
+    lora_alpha: int = 16
+
+    # 精度配置
+    use_fp16: bool = False
+    use_bf16: bool = True
+
     # 数据集配置
-    dataset_name: str
-    custom_dataset: Optional[Any]
-    dataset: Optional[Any]
-
-    # 奖励配置
-    custom_reward: Optional[Any]
-
-    # 监控配置
-    use_wandb: bool
-    use_tensorboard: bool
-    wandb_project: Optional[str]
+    dataset: Optional[Any] = None
 
     def __init__(
         self,
         model_name_or_path: str = "Qwen/Qwen3-0.6B",
-        use_lora: bool = True,
-        lora_rank: int = 8,
-        lora_alpha: int = 16,
         output_dir: str = "./outputs",
-        algorithm: str = "sft",
-        num_epochs: int = 2,
-        learning_rate: float = 5e-5,
-        batch_size: int = 4,
-        max_samples: int = -1,
-        use_fp16: bool = False,
-        use_bf16: bool = False,
-        use_wandb: bool = False,
-        use_tensorboard: bool = True,
-        wandb_project: Optional[str] = None,
     ):
+        """初始化训练器
+
+        Args:
+            model_name_or_path: 模型名称或路径
+            output_dir: 输出目录基础路径
+        """
         # 模型配置
         self.model_name_or_path = model_name_or_path
-        self.use_lora = use_lora
-        self.lora_rank = lora_rank
-        self.lora_alpha = lora_alpha
-
-        # 训练配置
-        self.algorithm = algorithm
-        self.num_epochs = num_epochs
-        self.learning_rate = learning_rate
-        self.batch_size = batch_size
-        self.max_samples = max_samples
-
-        # 精度配置
-        self.use_fp16 = use_fp16
-        self.use_bf16 = use_bf16
 
         # 输出配置
-        self.output_dir = output_dir
         # 创建带模型名和时间戳的输出目录
         model_name = model_name_or_path.split("/")[-1].replace(" ", "_")
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         self.output_dir = str(Path(output_dir) / model_name / timestamp)
 
-        # 数据集配置
-        self.custom_dataset = None
-        self.dataset = None
-
-        # 奖励配置
-        self.custom_reward = None
-
-        # 监控配置
-        self.use_wandb = use_wandb
-        self.use_tensorboard = use_tensorboard
-        self.wandb_project = wandb_project
-
         # 初始化 tokenizer 和 handlers
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-        self.reward_handler = RLRewardHandler()
-        self.evaluation_handler = RLEvaluationHandler()
+        # self.reward_handler = RLRewardHandler()
+        # self.evaluation_handler = RLEvaluationHandler()
 
     def _train_sft(
         self,
@@ -192,79 +150,59 @@ class RLTrainer:
 
     def train(
         self,
-        algorithm: Optional[str] = None,
+        algorithm: str = "sft",
         model_name: Optional[str] = None,
         dataset_name: Optional[str] = None,
-        max_samples: Optional[int] = None,
-        batch_size: Optional[int] = None,
-        num_epochs: Optional[int] = None,
-        learning_rate: Optional[float] = None,
-        use_lora: Optional[bool] = None,
-        lora_rank: Optional[int] = None,
-        lora_alpha: Optional[int] = None,
-        use_fp16: Optional[bool] = None,
-        use_bf16: Optional[bool] = None,
+        batch_size: int = 4,
+        num_epochs: int = 2,
+        learning_rate: float = 5e-5,
+        use_lora: bool = True,
+        lora_rank: int = 8,
+        lora_alpha: int = 16,
+        use_fp16: bool = False,
+        use_bf16: bool = False,
         custom_dataset: Optional[Any] = None,
         custom_reward: Optional[Any] = None,
-        use_wandb: Optional[bool] = None,
-        use_tensorboard: Optional[bool] = None,
+        use_wandb: bool = False,
+        use_tensorboard: bool = True,
         wandb_project: Optional[str] = None,
     ) -> str:
         """训练模型
 
         Args:
-            algorithm: 训练算法 (sft/grpo)，默认使用初始化时的值
+            algorithm: 训练算法 (sft/grpo)，默认为 "sft"
             model_name: 模型名称，默认使用初始化时的值
             dataset_name: 数据集名称，默认使用初始化时的值
-            max_samples: 最大样本数，-1 表示全量使用，默认使用初始化时的值
-            batch_size: 批次大小，默认使用初始化时的值
-            output_dir: 输出目录，默认使用初始化时的值
-            num_epochs: 训练轮数，默认使用初始化时的值
-            learning_rate: 学习率，默认使用初始化时的值
-            use_lora: 是否使用LoRA，默认使用初始化时的值
-            lora_rank: LoRA rank，默认使用初始化时的值
-            lora_alpha: LoRA alpha，默认使用初始化时的值
-            use_fp16: 是否使用 FP16 混合精度，默认使用初始化时的值
-            use_bf16: 是否使用 BF16 混合精度，默认使用初始化时的值
-            custom_dataset: 自定义数据集，会覆盖类属性
-            custom_reward: 自定义奖励函数，会覆盖类属性
-            use_wandb: 使用 wandb 监控，默认使用初始化时的值
-            use_tensorboard: 使用 tensorboard 监控，默认使用初始化时的值
-            wandb_project: wandb 项目名称，默认使用初始化时的值
+            max_samples: 最大样本数，-1 表示全量使用
+            batch_size: 批次大小，默认为 4
+            num_epochs: 训练轮数，默认为 2
+            learning_rate: 学习率，默认为 5e-5
+            use_lora: 是否使用LoRA，默认为 True
+            lora_rank: LoRA rank，默认为 8
+            lora_alpha: LoRA alpha，默认为 16
+            use_fp16: 是否使用 FP16 混合精度，默认为 False
+            use_bf16: 是否使用 BF16 混合精度，默认为 False
+            custom_dataset: 自定义数据集
+            custom_reward: 自定义奖励函数
+            use_wandb: 使用 wandb 监控，默认为 False
+            use_tensorboard: 使用 tensorboard 监控，默认为 True
+            wandb_project: wandb 项目名称
         """
         # 使用传入的参数，如果没有则使用类属性
-        algorithm = (algorithm or self.algorithm).lower().strip()
+        algorithm = algorithm.lower().strip()
         model_name = model_name or self.model_name_or_path
-        max_samples = max_samples if max_samples is not None else self.max_samples
-        batch_size = batch_size if batch_size is not None else self.batch_size
-        num_epochs = num_epochs if num_epochs is not None else self.num_epochs
-        learning_rate = learning_rate if learning_rate is not None else self.learning_rate
-        use_lora = use_lora if use_lora is not None else self.use_lora
-        lora_rank = lora_rank if lora_rank is not None else self.lora_rank
-        lora_alpha = lora_alpha if lora_alpha is not None else self.lora_alpha
-        use_fp16 = use_fp16 if use_fp16 is not None else self.use_fp16
-        use_bf16 = use_bf16 if use_bf16 is not None else self.use_bf16
-        use_wandb = use_wandb if use_wandb is not None else self.use_wandb
-        use_tensorboard = use_tensorboard if use_tensorboard is not None else self.use_tensorboard
-        wandb_project = wandb_project if wandb_project is not None else self.wandb_project
-
-        # 临时保存自定义参数（不影响类属性）
-        if custom_dataset is not None:
-            self.custom_dataset = custom_dataset
-        if custom_reward is not None:
-            self.custom_reward = custom_reward
 
         print(f"\n{'='*60}\n")
         print(f"开始 {algorithm.upper()} 训练")
         print(f"模型: {model_name}")
-        if custom_dataset:
+        if custom_dataset is not None:
             print(f"数据集: 自定义数据集")
         else:
-            print(f"数据集: {dataset_name}")
+            print(f"数据集: {dataset_name or '已注册的数据集'}")
         print(f"训练轮数: {num_epochs}")
         print(f"输出目录: {self.output_dir}")
         print(f"算法: {algorithm.upper()}")
-        if custom_reward:
+        if custom_reward is not None:
             print(f"奖励函数: 自定义奖励函数")
 
         monitoring = []
@@ -291,7 +229,7 @@ class RLTrainer:
                 batch_size=batch_size,
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
-                custom_dataset=self.custom_dataset,
+                custom_dataset=custom_dataset,
                 use_wandb=use_wandb,
                 use_tensorboard=use_tensorboard,
                 wandb_project=wandb_project,
