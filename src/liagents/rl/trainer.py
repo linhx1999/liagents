@@ -40,19 +40,12 @@ class RLTrainer:
     output_dir: str
     tokenizer: AutoTokenizer
 
+    dataset: Optional[Any] = None
+
     # 训练配置
     num_epochs: int = 2
     learning_rate: float = 5e-5
     batch_size: int = 4
-
-    # LoRA配置
-    use_lora: bool = True
-    lora_rank: int = 8
-    lora_alpha: int = 16
-
-    # 精度配置
-    use_fp16: bool = False
-    use_bf16: bool = True
 
     def __init__(
         self,
