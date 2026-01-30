@@ -4,12 +4,14 @@
 现在采用模块化设计，将不同功能分离到独立的组件中。
 """
 
-from typing import Dict, Any
+from typing import Any, Literal
+from transformers import AutoTokenizer
 import json
+
 from .core import RLTrainingCore
-from .handler.data_handler import RLDataHandler
 from .handler.reward_handler import RLRewardHandler
 from .handler.evaluation_handler import RLEvaluationHandler
+from .datasets import create_dataset
 
 
 class RLTrainer:
@@ -26,52 +28,64 @@ class RLTrainer:
     - 评估模型 (evaluate)
     """
 
-    def __init__(self):
+    def __init__(self, model_name: str = "Qwen/Qwen3-0.6B", use_lora: bool = True, output_dir: str = "./outputs"):
+        self.model_name = model_name
+        self.use_lora = use_lora
+        self.output_dir = output_dir
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
         self.training_core = RLTrainingCore()
-        self.data_handler = RLDataHandler()
         self.reward_handler = RLRewardHandler()
         self.evaluation_handler = RLEvaluationHandler()
+        self.custom_datasets = {}
 
-    def train(self, parameters: Dict[str, Any]) -> str:
+    def train(
+        self,
+        algorithm: str = "sft",
+        model_name: str = "Qwen/Qwen3-0.6B",
+        dataset_name: str = "gsm8k",
+        num_epochs: int = 2,
+        output_dir: str = "./outputs",
+        use_lora: bool = True,
+        batch_size: int = 4,
+        max_samples: int | None = None,
+        custom_dataset: Any = None,
+        custom_reward: Any = None,
+        use_wandb: bool = False,
+        use_tensorboard: bool = True,
+        wandb_project: str | None = None,
+    ) -> str:
         """训练模型
 
         Args:
-            parameters: 训练参数，包含:
-                - algorithm: 训练算法 (sft/grpo)
-                - model_name: 模型名称
-                - dataset: 数据集名称
-                - num_epochs: 训练轮数
-                - output_dir: 输出目录
-                - use_lora: 是否使用LoRA
-                - batch_size: 批次大小
+            algorithm: 训练算法 (sft/grpo)
+            model_name: 模型名称
+            dataset_name: 数据集名称
+            num_epochs: 训练轮数
+            output_dir: 输出目录
+            use_lora: 是否使用LoRA
+            batch_size: 批次大小
+            max_samples: 最大样本数
+            custom_dataset: 自定义数据集
+            custom_reward: 自定义奖励函数
+            use_wandb: 使用 wandb 监控
+            use_tensorboard: 使用 tensorboard 监控
+            wandb_project: wandb 项目名称
         """
-        algorithm = parameters.get("algorithm", "sft").lower()
-        model_name = parameters.get("model_name", "Qwen/Qwen2-0.5B-Instruct")
-        dataset_name = parameters.get("dataset", "gsm8k")
-        max_samples = parameters.get("max_samples", None)
-        num_epochs = parameters.get("num_epochs", 3)
-        output_dir = parameters.get("output_dir", "./output")
-        use_lora = parameters.get("use_lora", True)
-        batch_size = parameters.get("batch_size", 4)
-        custom_dataset = parameters.get("custom_dataset", None)
-        custom_reward = parameters.get("custom_reward", None)
-        use_wandb = parameters.get("use_wandb", False)
-        use_tensorboard = parameters.get("use_tensorboard", True)
-        wandb_project = parameters.get("wandb_project", None)
+        algorithm = algorithm.lower().strip()
 
-        print(f"\n{'='*60}")
-        print(f"🚀 开始 {algorithm.upper()} 训练")
-        print(f"{'='*60}")
-        print(f"📦 模型: {model_name}")
+        print(f"\n{'='*60}\n")
+        print(f"开始 {algorithm.upper()} 训练")
+        print(f"模型: {model_name}")
         if custom_dataset:
-            print(f"📊 数据集: 自定义数据集")
+            print(f"数据集: 自定义数据集 ")
         else:
-            print(f"📊 数据集: {dataset_name}")
-        print(f"🔄 训练轮数: {num_epochs}")
-        print(f"💾 输出目录: {output_dir}")
-        print(f"🎯 算法: {algorithm.upper()}")
+            print(f"数据集: {dataset_name}")
+        print(f"训练轮数: {num_epochs}")
+        print(f"输出目录: {output_dir}")
+        print(f"算法: {algorithm.upper()}")
         if custom_reward:
-            print(f"🎁 奖励函数: 自定义奖励函数")
+            print(f"奖励函数: 自定义奖励函数")
 
         monitoring = []
         if use_wandb:
@@ -79,9 +93,9 @@ class RLTrainer:
         if use_tensorboard:
             monitoring.append("tensorboard")
         if monitoring:
-            print(f"📊 训练监控: {', '.join(monitoring)}")
+            print(f"训练监控: {', '.join(monitoring)}")
 
-        print(f"{'='*60}\n")
+        print(f"\n{'='*60}\n")
 
         if not self.training_core.trl_available:
             return json.dumps({
@@ -126,35 +140,34 @@ class RLTrainer:
 
         return json.dumps(result, ensure_ascii=False, indent=2)
 
-    def load_dataset(self, parameters: Dict[str, Any]) -> str:
-        """加载数据集"""
-        return self.data_handler.handle_load_dataset(parameters)
+    def load_dataset(
+        self,
+        dataset_name_or_path: str = "openai/gsm8k",
+        format_type: Literal["sft", "rl"] = "sft",
+        split: str = "train",
+        max_samples: int = 100,
+    ) -> str:
 
-    def create_reward(self, parameters: Dict[str, Any]) -> str:
-        """创建奖励函数"""
-        return self.reward_handler.handle_create_reward(parameters)
+        format_type = format_type.lower().strip()
+        if format_type in ["sft", "rl"]:
+            dataset = create_dataset(
+                dataset_name_or_path=dataset_name_or_path,
+                format_type=format_type,
+                max_samples=max_samples,
+                split=split,
+                tokenizer=self.tokenizer
+            )
+        else:
+            return json.dumps({
+                "status": "error",
+                "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl"
+            }, ensure_ascii=False, indent=2)
 
-    def evaluate(self, parameters: Dict[str, Any]) -> str:
-        """评估模型"""
-        return self.evaluation_handler.handle_evaluate(parameters)
-
-    # 便捷函数接口
-    def register_dataset(self, name: str, dataset) -> None:
-        """
-        注册自定义数据集
-
-        Args:
-            name: 数据集名称
-            dataset: 数据集对象(HuggingFace Dataset)
-        """
-        self.data_handler.register_dataset(name, dataset)
-
-    def register_reward_function(self, name: str, reward_fn) -> None:
-        """
-        注册自定义奖励函数
-
-        Args:
-            name: 奖励函数名称
-            reward_fn: 奖励函数(接受completions和kwargs,返回rewards列表)
-        """
-        self.reward_handler.register_reward_function(name, reward_fn)
+        result = {
+            "status": "success",
+            "format_type": format_type,
+            "split": split,
+            "dataset_size": len(dataset),
+            "sample_examples": dataset[:3] if len(dataset) > 3 else []
+        }
+        return json.dumps(result, ensure_ascii=False, indent=2)
