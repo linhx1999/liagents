@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 
 class Config(BaseModel):
-
     # LLM配置
     model: str = os.getenv("MODEL", "")
     temperature: float = 0.7

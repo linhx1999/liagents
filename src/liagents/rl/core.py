@@ -58,10 +58,7 @@ class TrainingConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
-            k: v for k, v in self.__dict__.items()
-            if not k.startswith('_')
-        }
+        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
 
 class DetailedLoggingCallback(TrainerCallback):
@@ -146,9 +143,7 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
     """
 
     def __init__(
-        self,
-        config: Optional[TrainingConfig] = None,
-        dataset: Optional[Dataset] = None
+        self, config: Optional[TrainingConfig] = None, dataset: Optional[Dataset] = None
     ):
         """初始化SFT训练器
 
@@ -201,14 +196,16 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
 
         # 计算总步数
         total_steps = (
-            len(self.dataset) //
-            (self.config.per_device_train_batch_size * self.config.gradient_accumulation_steps)
+            len(self.dataset)
+            // (
+                self.config.per_device_train_batch_size
+                * self.config.gradient_accumulation_steps
+            )
         ) * self.config.num_train_epochs
 
         # 创建详细日志回调
         logging_callback = DetailedLoggingCallback(
-            total_steps=total_steps,
-            num_epochs=self.config.num_train_epochs
+            total_steps=total_steps, num_epochs=self.config.num_train_epochs
         )
 
         # 创建训练器
@@ -228,7 +225,6 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
 
         return self.trainer
 
-
     def setup_model(self):
         """设置模型和tokenizer"""
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -237,8 +233,7 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
 
         # 加载tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.config.model_name_or_path,
-            trust_remote_code=True
+            self.config.model_name_or_path, trust_remote_code=True
         )
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
@@ -248,7 +243,7 @@ class SFTTrainerWrapper(BaseTrainerWrapper):
         self.model = AutoModelForCausalLM.from_pretrained(
             self.config.model_name_or_path,
             trust_remote_code=True,
-            device_map=device_map
+            device_map=device_map,
         )
 
         print("模型加载完成")
@@ -271,6 +266,7 @@ def setup_training_environment(config: TrainingConfig) -> None:
     # 设置随机种子
     try:
         import torch
+
         torch.manual_seed(config.seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(config.seed)

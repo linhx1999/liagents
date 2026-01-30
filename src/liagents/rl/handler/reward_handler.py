@@ -9,7 +9,7 @@ import json
 
 class RLRewardHandler:
     """RL奖励处理类，负责奖励函数的创建和管理"""
-    
+
     def __init__(self):
         # 存储自定义奖励函数
         self.custom_reward_functions = {}
@@ -30,7 +30,7 @@ class RLRewardHandler:
         from hello_agents.rl import (
             create_accuracy_reward,
             create_length_penalty_reward,
-            create_step_reward
+            create_step_reward,
         )
 
         reward_type = parameters.get("reward_type", "accuracy").lower()
@@ -40,7 +40,7 @@ class RLRewardHandler:
             result = {
                 "status": "success",
                 "reward_type": "accuracy",
-                "description": "准确性奖励函数: 答案正确=1.0, 错误=0.0"
+                "description": "准确性奖励函数: 答案正确=1.0, 错误=0.0",
             }
         elif reward_type == "length_penalty":
             penalty_weight = parameters.get("penalty_weight", 0.001)
@@ -50,33 +50,36 @@ class RLRewardHandler:
             reward_fn = create_length_penalty_reward(
                 base_reward_fn=base_reward_fn,
                 max_length=max_length,
-                penalty_weight=penalty_weight
+                penalty_weight=penalty_weight,
             )
             result = {
                 "status": "success",
                 "reward_type": "length_penalty",
                 "penalty_weight": penalty_weight,
                 "max_length": max_length,
-                "description": f"长度惩罚奖励函数: 基础奖励 - {penalty_weight} * (长度 / {max_length})"
+                "description": f"长度惩罚奖励函数: 基础奖励 - {penalty_weight} * (长度 / {max_length})",
             }
         elif reward_type == "step":
             step_bonus = parameters.get("step_bonus", 0.1)
             # 创建基础奖励函数
             base_reward_fn = create_accuracy_reward()
             reward_fn = create_step_reward(
-                base_reward_fn=base_reward_fn,
-                step_bonus=step_bonus
+                base_reward_fn=base_reward_fn, step_bonus=step_bonus
             )
             result = {
                 "status": "success",
                 "reward_type": "step",
                 "step_bonus": step_bonus,
-                "description": f"步骤奖励函数: 基础奖励 + {step_bonus} * 步骤数"
+                "description": f"步骤奖励函数: 基础奖励 + {step_bonus} * 步骤数",
             }
         else:
-            return json.dumps({
-                "status": "error",
-                "message": f"不支持的奖励类型: {reward_type}。支持的类型: accuracy, length_penalty, step"
-            }, ensure_ascii=False, indent=2)
+            return json.dumps(
+                {
+                    "status": "error",
+                    "message": f"不支持的奖励类型: {reward_type}。支持的类型: accuracy, length_penalty, step",
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
 
         return json.dumps(result, ensure_ascii=False, indent=2)

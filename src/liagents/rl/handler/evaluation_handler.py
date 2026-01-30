@@ -16,7 +16,7 @@ class RLEvaluationHandler:
             from hello_agents.rl import (
                 create_rl_dataset,
                 create_accuracy_reward,
-                evaluate_rewards
+                evaluate_rewards,
             )
             from transformers import AutoModelForCausalLM, AutoTokenizer
             import torch
@@ -25,14 +25,17 @@ class RLEvaluationHandler:
             max_samples = parameters.get("max_samples", 100)
 
             if not model_path:
-                return json.dumps({
-                    "status": "error",
-                    "message": "缺少必需参数: model_path"
-                }, ensure_ascii=False, indent=2)
+                return json.dumps(
+                    {"status": "error", "message": "缺少必需参数: model_path"},
+                    ensure_ascii=False,
+                    indent=2,
+                )
 
             # 加载测试数据
             print(f"📥 加载测试数据集 (max_samples={max_samples})...")
-            dataset = create_rl_dataset(split="test", max_samples=max_samples, model_name=model_path)
+            dataset = create_rl_dataset(
+                split="test", max_samples=max_samples, model_name=model_path
+            )
 
             # 加载模型和tokenizer
             print(f"📥 加载模型: {model_path}...")
@@ -43,10 +46,11 @@ class RLEvaluationHandler:
                 model = model.to(device)
                 model.eval()
             except Exception as e:
-                return json.dumps({
-                    "status": "error",
-                    "message": f"模型加载失败: {str(e)}"
-                }, ensure_ascii=False, indent=2)
+                return json.dumps(
+                    {"status": "error", "message": f"模型加载失败: {str(e)}"},
+                    ensure_ascii=False,
+                    indent=2,
+                )
 
             # 生成预测
             print("🔮 生成预测...")
@@ -56,6 +60,7 @@ class RLEvaluationHandler:
             # 导入tqdm用于进度条
             try:
                 from tqdm import tqdm
+
                 use_tqdm = True
             except ImportError:
                 use_tqdm = False
@@ -78,10 +83,12 @@ class RLEvaluationHandler:
                         max_new_tokens=128,  # 减少生成长度加快速度
                         temperature=0.7,
                         do_sample=False,  # 使用贪婪解码加快速度
-                        pad_token_id=tokenizer.pad_token_id
+                        pad_token_id=tokenizer.pad_token_id,
                     )
                 # 只取生成的部分,不包括输入
-                completion = tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True)
+                completion = tokenizer.decode(
+                    outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
+                )
 
                 completions.append(completion)
                 ground_truths.append(ground_truth)
@@ -105,7 +112,7 @@ class RLEvaluationHandler:
                 "num_samples": len(completions),
                 "accuracy": f"{accuracy:.2%}",
                 "average_reward": f"{avg_reward:.4f}",
-                "device": device
+                "device": device,
             }
 
             print(f"\n✅ 评估完成!")
@@ -115,7 +122,8 @@ class RLEvaluationHandler:
             return json.dumps(result, ensure_ascii=False, indent=2)
 
         except Exception as e:
-            return json.dumps({
-                "status": "error",
-                "message": f"评估失败: {str(e)}"
-            }, ensure_ascii=False, indent=2)
+            return json.dumps(
+                {"status": "error", "message": f"评估失败: {str(e)}"},
+                ensure_ascii=False,
+                indent=2,
+            )

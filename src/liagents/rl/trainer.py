@@ -21,10 +21,9 @@ from .datasets import create_dataset
 from .rewards import (
     create_accuracy_reward,
     create_length_penalty_reward,
-    create_step_reward
+    create_step_reward,
 )
 from .utils import check_trl_installation
-
 
 
 class RLTrainer:
@@ -44,7 +43,12 @@ class RLTrainer:
     model_name_or_path: str
     custom_dataset: Optional[Any] = None
 
-    def __init__(self, model_name_or_path: str = "Qwen/Qwen3-0.6B", use_lora: bool = True, output_dir: str = "./outputs"):
+    def __init__(
+        self,
+        model_name_or_path: str = "Qwen/Qwen3-0.6B",
+        use_lora: bool = True,
+        output_dir: str = "./outputs",
+    ):
         self.model_name_or_path = model_name_or_path
         self.use_lora = use_lora
 
@@ -66,10 +70,10 @@ class RLTrainer:
         batch_size: int,
         use_fp16: bool = False,
         use_bf16: bool = False,
-        custom_dataset = None,
+        custom_dataset=None,
         use_wandb: bool = False,
         use_tensorboard: bool = True,
-        wandb_project: Optional[str] = None
+        wandb_project: Optional[str] = None,
     ) -> dict[str, Any]:
         """执行SFT训练"""
         # 创建配置
@@ -83,7 +87,7 @@ class RLTrainer:
             use_bf16=use_bf16,
             use_wandb=use_wandb,
             use_tensorboard=use_tensorboard,
-            wandb_project=wandb_project
+            wandb_project=wandb_project,
         )
 
         # 设置环境
@@ -115,7 +119,7 @@ class RLTrainer:
             "model": self.model_name_or_path,
             "output_dir": self.output_dir,
             "num_epochs": num_epochs,
-            "dataset_size": len(dataset)
+            "dataset_size": len(dataset),
         }
 
     def train(
@@ -187,10 +191,9 @@ class RLTrainer:
         print(f"\n{'='*60}\n")
 
         if not check_trl_installation():
-            return json.dumps({
-                "status": "error",
-                "message": "TRL不可用"
-            }, ensure_ascii=False, indent=2)
+            return json.dumps(
+                {"status": "error", "message": "TRL不可用"}, ensure_ascii=False, indent=2
+            )
 
         if algorithm == "sft":
             result = self._train_sft(
@@ -203,7 +206,7 @@ class RLTrainer:
                 custom_dataset=custom_dataset,
                 use_wandb=use_wandb,
                 use_tensorboard=use_tensorboard,
-                wandb_project=wandb_project
+                wandb_project=wandb_project,
             )
         # elif algorithm == "grpo":
         #     result = self.training_core.train_grpo(
@@ -223,7 +226,7 @@ class RLTrainer:
         else:
             result = {
                 "status": "error",
-                "message": f"不支持的算法: {algorithm}。支持的算法: sft, grpo"
+                "message": f"不支持的算法: {algorithm}。支持的算法: sft, grpo",
             }
 
         return json.dumps(result, ensure_ascii=False, indent=2)
@@ -235,7 +238,6 @@ class RLTrainer:
         split: str = "train",
         max_samples: int = 32,
     ) -> dict[str, Any]:
-
         format_type = format_type.lower().strip()
         if format_type in ["sft", "rl"]:
             self.dataset = create_dataset(
@@ -243,12 +245,12 @@ class RLTrainer:
                 format_type=format_type,
                 max_samples=max_samples,
                 split=split,
-                tokenizer=self.tokenizer
+                tokenizer=self.tokenizer,
             )
         else:
             return {
                 "status": "error",
-                "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl"
+                "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl",
             }
 
         result = {
@@ -256,6 +258,6 @@ class RLTrainer:
             "format_type": format_type,
             "split": split,
             "dataset_size": len(self.dataset),
-            "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else []
+            "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else [],
         }
         return result

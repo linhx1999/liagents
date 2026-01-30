@@ -216,7 +216,7 @@ class TestAgentToolManagement:
         """测试没有工具注册表时移除工具"""
         client = Mock(spec=Client)
         agent = ConcreteAgent(name="test_agent", client=client)
-        with mock_patch.object(agent, 'tool_registry', None):
+        with mock_patch.object(agent, "tool_registry", None):
             result = agent.remove_tool("test_tool")
             assert result is False
 
@@ -235,7 +235,7 @@ class TestAgentToolManagement:
         """测试没有工具注册表时列出工具"""
         client = Mock(spec=Client)
         agent = ConcreteAgent(name="test_agent", client=client)
-        with mock_patch.object(agent, 'tool_registry', None):
+        with mock_patch.object(agent, "tool_registry", None):
             tools = agent.list_tools()
             assert tools == []
 
@@ -250,7 +250,7 @@ class TestAgentToolManagement:
         """测试没有工具注册表时"""
         client = Mock(spec=Client)
         agent = ConcreteAgent(name="test_agent", client=client)
-        with mock_patch.object(agent, 'tool_registry', None):
+        with mock_patch.object(agent, "tool_registry", None):
             assert agent.has_tools() is False
 
 
