@@ -11,8 +11,6 @@ from datetime import datetime
 from pathlib import Path
 
 from .core import (
-    TrainingConfig,
-    SFTTrainerWrapper,
     setup_training_environment,
 )
 from .handler.reward_handler import RLRewardHandler
@@ -126,9 +124,7 @@ class RLTrainer:
         use_bf16: bool = False,
         custom_dataset: Optional[Any] = None,
         custom_reward: Optional[Any] = None,
-        use_wandb: bool = False,
         use_tensorboard: bool = True,
-        wandb_project: Optional[str] = None,
     ) -> str:
         # 设置类参数
         self.num_epochs = num_epochs
@@ -149,13 +145,8 @@ class RLTrainer:
         if custom_reward is not None:
             print(f"奖励函数: 自定义奖励函数")
 
-        monitoring = []
-        if use_wandb:
-            monitoring.append(f"wandb (项目: {wandb_project or 'default'})")
         if use_tensorboard:
-            monitoring.append("tensorboard")
-        if monitoring:
-            print(f"训练监控: {', '.join(monitoring)}")
+            print(f"训练监控: tensorboard")
 
         print(f"\n{'='*60}\n")
 
@@ -172,9 +163,7 @@ class RLTrainer:
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
                 custom_dataset=custom_dataset,
-                use_wandb=use_wandb,
                 use_tensorboard=use_tensorboard,
-                wandb_project=wandb_project,
             )
         # elif algorithm == "grpo":
         #     result = self.training_core.train_grpo(
@@ -187,9 +176,7 @@ class RLTrainer:
         #         batch_size=batch_size,
         #         custom_dataset=custom_dataset,
         #         custom_reward=custom_reward,
-        #         use_wandb=use_wandb,
-        #         use_tensorboard=use_tensorboard,
-        #         wandb_project=wandb_project
+        #         use_tensorboard=use_tensorboard
         #     )
         else:
             result = {
@@ -206,51 +193,90 @@ class RLTrainer:
         lora_alpha: int,
         use_fp16: bool = False,
         use_bf16: bool = False,
-        custom_dataset=None,
-        use_wandb: bool = False,
         use_tensorboard: bool = True,
-        wandb_project: Optional[str] = None,
     ) -> dict[str, Any]:
         """执行SFT训练"""
-        # 创建配置
-        config = TrainingConfig(
-            model_name_or_path=self.model_name_or_path,
+        from trl import SFTConfig, SFTTrainer
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        # 创建监控配置
+        report_to = ["tensorboard"] if use_tensorboard else ["none"]
+
+        config = SFTConfig(
             output_dir=self.output_dir,
             num_train_epochs=self.num_epochs,
             per_device_train_batch_size=self.batch_size,
             learning_rate=self.learning_rate,
-            use_lora=use_lora,
-            lora_r=lora_rank,
-            lora_alpha=lora_alpha,
-            use_fp16=use_fp16,
-            use_bf16=use_bf16,
-            use_wandb=use_wandb,
-            use_tensorboard=use_tensorboard,
-            wandb_project=wandb_project,
+            fp16=use_fp16,
+            bf16=use_bf16,
+            report_to=report_to,
         )
 
         # 设置环境
-        setup_training_environment(config)
+        setup_training_environment(
+            output_dir=self.output_dir,
+            seed=42,
+        )
 
-        # 加载数据集
-        if custom_dataset is not None:
-            # 使用自定义数据集
-            dataset = custom_dataset
-            print(f"使用自定义数据集: {len(dataset)} 个样本")
-        elif self.dataset is not None:
-            dataset = self.dataset
-            print(f"使用注册的数据集: {len(dataset)} 个样本")
-        else:
-            raise ValueError("未指定数据集，请先加载数据集")
+        # 加载模型和 tokenizer
+        print(f"加载模型: {self.model_name_or_path}")
+
+        # 加载 tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name_or_path, trust_remote_code=True
+        )
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+
+        # 加载模型
+        device_map = "auto" if use_fp16 else None
+        model = AutoModelForCausalLM.from_pretrained(
+            self.model_name_or_path,
+            trust_remote_code=True,
+            device_map=device_map,
+        )
+
+        # 应用 LoRA（如果需要）
+        if use_lora:
+            from peft import LoraConfig, get_peft_model
+
+            lora_config = LoraConfig(
+                r=lora_rank,
+                lora_alpha=lora_alpha,
+                target_modules=["q_proj", "v_proj"],
+                lora_dropout=0.05,
+                bias="none",
+                task_type="CAUSAL_LM",
+            )
+            model = get_peft_model(model, lora_config)
+            print(f"LoRA 已应用 (rank={lora_rank}, alpha={lora_alpha})")
+
+        print("模型加载完成")
+
+        # 计算总步数
+        total_steps = (
+            len(self.dataset)
+            // (config.per_device_train_batch_size * config.gradient_accumulation_steps)
+        ) * config.num_train_epochs
 
         # 创建训练器
-        trainer_wrapper = SFTTrainerWrapper(config=config, dataset=dataset)
+        trainer = SFTTrainer(
+            model=model,
+            args=config,
+            train_dataset=self.dataset,
+            processing_class=tokenizer,
+        )
 
         # 开始训练
-        trainer_wrapper.train()
+        print("\n开始SFT训练...")
+        print(f"{'='*80}\n")
+        trainer.train()
+        print(f"\n{'='*80}")
+        print("SFT训练完成")
 
         # 保存模型
-        trainer_wrapper.save_model()
+        trainer.save_model()
+        print(f"模型已保存到: {self.output_dir}")
 
         return {
             "status": "success",
@@ -258,5 +284,5 @@ class RLTrainer:
             "model": self.model_name_or_path,
             "output_dir": self.output_dir,
             "num_epochs": self.num_epochs,
-            "dataset_size": len(dataset),
+            "dataset_size": len(self.dataset),
         }
