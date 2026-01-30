@@ -1,4 +1,4 @@
-from liagents.rl.trainning import RLTrainer
+from liagents.rl import RLTrainer
 import json
 
 

@@ -1,6 +1,6 @@
 """RL包初始化文件"""
 
-from .trainning import RLTrainer
+from .trainer import RLTrainer
 from .core import (
     SFTTrainerWrapper,
     TrainingConfig,
@@ -20,13 +20,10 @@ from .rewards import (
 __all__ = [
     'RLTrainer',
     'SFTTrainerWrapper',
-    'GRPOTrainerWrapper',
     'TrainingConfig',
     'BaseTrainerWrapper',
     'DetailedLoggingCallback',
     'setup_training_environment',
-    'create_sft_dataset',
-    'create_rl_dataset',
     'create_dataset',
     'BaseDataset',
     'GSM8KDataset',

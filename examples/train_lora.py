@@ -1,4 +1,4 @@
-from liagents.rl.trainning import RLTrainer
+from liagents.rl import RLTrainer
 
 # 创建训练工具
 rl_trainer = RLTrainer("/home/linhx/models/Qwen3-0.6B")
