@@ -84,6 +84,47 @@ class RLTrainer:
         # self.reward_handler = RLRewardHandler()
         # self.evaluation_handler = RLEvaluationHandler()
 
+    def load_dataset(
+        self,
+        dataset_name_or_path: str = "openai/gsm8k",
+        format_type: Literal["sft", "rl"] = "sft",
+        split: str = "train",
+        max_samples: int = -1,
+    ) -> dict[str, Any]:
+        """加载数据集
+
+        Args:
+            dataset_name_or_path: 数据集名称或路径
+            format_type: 数据格式类型 ("sft" 或 "rl")
+            split: 数据集分割 ("train" 或 "test")
+            max_samples: 最大样本数，-1 表示全量使用
+
+        Returns:
+            包含加载结果信息的字典
+        """
+        if format_type in ("sft", "rl"):
+            self.dataset = create_dataset(
+                dataset_name_or_path=dataset_name_or_path,
+                format_type=format_type,
+                max_samples=max_samples,
+                split=split,
+                tokenizer=self.tokenizer,
+            )
+        else:
+            return {
+                "status": "error",
+                "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl",
+            }
+
+        result = {
+            "status": "success",
+            "format_type": format_type,
+            "split": split,
+            "dataset_size": len(self.dataset),
+            "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else [],
+        }
+        return result
+
     def train(
         self,
         algorithm: str = "sft",
@@ -192,47 +233,6 @@ class RLTrainer:
             }
 
         return json.dumps(result, ensure_ascii=False, indent=2)
-
-    def load_dataset(
-        self,
-        dataset_name_or_path: str = "openai/gsm8k",
-        format_type: Literal["sft", "rl"] = "sft",
-        split: str = "train",
-        max_samples: int = -1,
-    ) -> dict[str, Any]:
-        """加载数据集
-
-        Args:
-            dataset_name_or_path: 数据集名称或路径
-            format_type: 数据格式类型 ("sft" 或 "rl")
-            split: 数据集分割 ("train" 或 "test")
-            max_samples: 最大样本数，-1 表示全量使用
-
-        Returns:
-            包含加载结果信息的字典
-        """
-        if format_type in ("sft", "rl"):
-            self.dataset = create_dataset(
-                dataset_name_or_path=dataset_name_or_path,
-                format_type=format_type,
-                max_samples=max_samples,
-                split=split,
-                tokenizer=self.tokenizer,
-            )
-        else:
-            return {
-                "status": "error",
-                "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl",
-            }
-
-        result = {
-            "status": "success",
-            "format_type": format_type,
-            "split": split,
-            "dataset_size": len(self.dataset),
-            "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else [],
-        }
-        return result
 
     def _train_sft(
         self,
