@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "linhx", email = "linhx1999@163.com" }
 ]
-requires-python = ">=3.12"
+requires-python = "~=3.12"
 dependencies = [
     "openai<2.0.0",
     "tavily~=1.1.0",
@@ -22,14 +22,8 @@ dev = [
     "pytest~=7.4.0",
     "pytest-mock~=3.14.0",
 ]
+
+[project.optional-dependencies]
 example = [
     "python-dotenv~=1.0.0",
 ]
-model = [
-    "vllm~=0.8.0",
-    "transformers~=4.52.0"
-]
-
-[[tool.uv.index]]
-name = "tencent"
-url = "https://mirrors.cloud.tencent.com/pypi/simple/"
