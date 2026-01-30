@@ -51,7 +51,7 @@ class RLTrainer:
     num_epochs: int
     learning_rate: float
     batch_size: int
-    max_samples: int
+    max_samples: int  # -1 表示全量使用数据集
 
     # 精度配置
     use_fp16: bool
@@ -225,7 +225,7 @@ class RLTrainer:
             algorithm: 训练算法 (sft/grpo)，默认使用初始化时的值
             model_name: 模型名称，默认使用初始化时的值
             dataset_name: 数据集名称，默认使用初始化时的值
-            max_samples: 最大样本数，默认使用初始化时的值
+            max_samples: 最大样本数，-1 表示全量使用，默认使用初始化时的值
             batch_size: 批次大小，默认使用初始化时的值
             output_dir: 输出目录，默认使用初始化时的值
             num_epochs: 训练轮数，默认使用初始化时的值
@@ -335,8 +335,19 @@ class RLTrainer:
         dataset_name_or_path: str = "openai/gsm8k",
         format_type: Literal["sft", "rl"] = "sft",
         split: str = "train",
-        max_samples: int = 32,
+        max_samples: int = -1,
     ) -> dict[str, Any]:
+        """加载数据集
+
+        Args:
+            dataset_name_or_path: 数据集名称或路径
+            format_type: 数据格式类型 ("sft" 或 "rl")
+            split: 数据集分割 ("train" 或 "test")
+            max_samples: 最大样本数，-1 表示全量使用
+
+        Returns:
+            包含加载结果信息的字典
+        """
         format_type = format_type.lower().strip()
         if format_type in ["sft", "rl"]:
             self.dataset = create_dataset(

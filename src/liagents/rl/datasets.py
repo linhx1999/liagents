@@ -25,7 +25,7 @@ class BaseDataset(ABC):
         Args:
             dataset_name_or_path: 数据集名称或路径
             split: 数据集分割 ("train" 或 "test")
-            max_samples: 最大样本数（用于快速测试）
+            max_samples: 最大样本数，-1 或 None 表示全量使用，>0 表示限制数量
             format_type: 数据格式类型 ("sft" 用于监督学习, "rl" 用于强化学习)
             tokenizer: Tokenizer对象,用于RL格式应用chat template
             subset: 数据集子集名称（某些数据集需要）
@@ -38,28 +38,35 @@ class BaseDataset(ABC):
         self.subset = subset
 
         print(f"加载 {self.__class__.__name__} 数据集 (split={split})...")
-        self.dataset = self._load_dataset()
+        self.dataset = self._load_dataset(max_samples=max_samples)
 
-        if max_samples:
-            self.dataset = self.dataset.select(
-                range(min(max_samples, len(self.dataset)))
-            )
-            print(f"   使用 {len(self.dataset)} 个样本（限制：{max_samples}）")
-        else:
-            print(f"   加载了 {len(self.dataset)} 个样本")
-
-    def _load_dataset(self) -> Dataset:
+    def _load_dataset(self, max_samples: Optional[int] = None) -> Dataset:
         """加载数据集
 
+        Args:
+            max_samples: 最大样本数，-1 或 None 表示全量使用，>0 表示限制数量
+
         Returns:
-            HuggingFace Dataset对象
+            HuggingFace Dataset对象（可能已被限制数量）
         """
+        # 加载原始数据集
         if self.subset:
-            return load_dataset(
+            dataset = load_dataset(
                 self.dataset_name_or_path, self.subset, split=self.split
             )
         else:
-            return load_dataset(self.dataset_name_or_path, split=self.split)
+            dataset = load_dataset(self.dataset_name_or_path, split=self.split)
+
+        # 处理样本数量限制
+        # max_samples: -1 或 None 表示全量，>0 表示限制数量
+        if max_samples is not None and max_samples > 0:
+            dataset = dataset.select(range(min(max_samples, len(dataset))))
+            print(f"   使用 {len(dataset)} 个样本（限制：{max_samples}）")
+        else:
+            # max_samples 为 None 或 -1 时，使用全量数据集
+            print(f"   加载了 {len(dataset)} 个样本")
+
+        return dataset
 
     @abstractmethod
     def format_for_sft(self, example: Dict[str, Any]) -> Dict[str, str]:
@@ -120,7 +127,7 @@ class BaseDataset(ABC):
 def create_dataset(
     dataset_name_or_path: str = "openai/gsm8k",
     format_type: Literal["sft", "rl"] = "sft",
-    max_samples: Optional[int] = 100,
+    max_samples: Optional[int] = -1,
     split: str = "train",
     tokenizer: Optional[AutoTokenizer] = None,
 ) -> Dataset:
@@ -129,7 +136,7 @@ def create_dataset(
     Args:
         dataset_name_or_path: 数据集名称或路径
         format_type: 数据格式 (sft/rl)
-        max_samples: 最大样本数
+        max_samples: 最大样本数，-1 或 None 表示全量使用
         split: 数据集分割
         tokenizer: Tokenizer对象
 
@@ -160,7 +167,7 @@ class GSM8KDataset(BaseDataset):
         self,
         dataset_name_or_path: str = "openai/gsm8k",
         split: str = "train",
-        max_samples: int = 100,
+        max_samples: int = -1,
         format_type: Literal["sft", "rl"] = "sft",
         tokenizer: Optional[AutoTokenizer] = None,  # 用于RL格式应用chat template
     ):
@@ -170,7 +177,7 @@ class GSM8KDataset(BaseDataset):
         Args:
             dataset_name_or_path: 数据集名称或路径
             split: 数据集分割 ("train" 或 "test")
-            max_samples: 最大样本数（用于快速测试）
+            max_samples: 最大样本数，-1 或 None 表示全量使用
             format_type: 数据格式类型 ("sft" 用于监督学习, "rl" 用于强化学习)
             tokenizer: Tokenizer对象,用于RL格式应用chat template
         """
