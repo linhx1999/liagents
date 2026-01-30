@@ -31,4 +31,5 @@ example = [
 rl = [
     "trl~=0.26.2",
     "tensorboardX~=2.6.0",
+    "peft"
 ]
