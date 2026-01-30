@@ -29,4 +29,5 @@ example = [
 ]
 rl = [
     "trl~=0.26.2",
+    "tensorboardX",
 ]
