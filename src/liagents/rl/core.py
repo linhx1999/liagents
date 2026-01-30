@@ -81,7 +81,7 @@ class DetailedLoggingCallback(TrainerCallback):
     def on_epoch_begin(self, args, state, control, **kwargs):
         """每个epoch开始时调用"""
         self.current_epoch = state.epoch
-        print(f"\n正在进行 {int(self.current_epoch)}/{self.num_epochs} 轮（epoch）训练")
+        print(f"\n正在进行 {int(self.current_epoch) + 1}/{self.num_epochs} 轮（epoch）训练")
 
     def on_step_end(self, args, state, control, **kwargs):
         """每个step结束时调用"""
