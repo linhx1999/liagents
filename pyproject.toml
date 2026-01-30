@@ -26,8 +26,9 @@ dev = [
 [project.optional-dependencies]
 example = [
     "python-dotenv~=1.0.0",
+    "tensorboard~=2.20.0",
 ]
 rl = [
     "trl~=0.26.2",
-    "tensorboardX",
+    "tensorboardX~=2.6.0",
 ]
