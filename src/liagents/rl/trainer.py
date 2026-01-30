@@ -109,7 +109,7 @@ class RLTrainer:
             "format_type": format_type,
             "split": split,
             "dataset_size": len(self.dataset),
-            "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else [],
+            "sample_examples": self.dataset[:3],
         }
 
     def train(
