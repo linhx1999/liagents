@@ -10,13 +10,13 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from .core import (
+from .utils import (
+    check_trl_installation,
     setup_training_environment,
 )
 from .handler.reward_handler import RLRewardHandler
 from .handler.evaluation_handler import RLEvaluationHandler
 from .datasets import create_dataset
-from .utils import check_trl_installation
 
 
 class RLTrainer:
@@ -201,16 +201,6 @@ class RLTrainer:
         # 创建监控配置
         report_to = ["tensorboard"] if use_tensorboard else ["none"]
 
-        config = SFTConfig(
-            output_dir=self.output_dir,
-            num_train_epochs=self.num_epochs,
-            per_device_train_batch_size=self.batch_size,
-            learning_rate=self.learning_rate,
-            fp16=use_fp16,
-            bf16=use_bf16,
-            report_to=report_to,
-        )
-
         # 设置环境
         setup_training_environment(
             output_dir=self.output_dir,
@@ -251,6 +241,16 @@ class RLTrainer:
             print(f"LoRA 已应用 (rank={lora_rank}, alpha={lora_alpha})")
 
         print("模型加载完成")
+
+        config = SFTConfig(
+            output_dir=self.output_dir,
+            num_train_epochs=self.num_epochs,
+            per_device_train_batch_size=self.batch_size,
+            learning_rate=self.learning_rate,
+            fp16=use_fp16,
+            bf16=use_bf16,
+            report_to=report_to,
+        )
 
         # 计算总步数
         total_steps = (
