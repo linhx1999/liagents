@@ -7,6 +7,8 @@
 from typing import Any, Literal, Optional
 from transformers import AutoTokenizer
 import json
+from datetime import datetime
+from pathlib import Path
 
 from .core import (
     TrainingConfig,
@@ -45,7 +47,12 @@ class RLTrainer:
     def __init__(self, model_name_or_path: str = "Qwen/Qwen3-0.6B", use_lora: bool = True, output_dir: str = "./outputs"):
         self.model_name_or_path = model_name_or_path
         self.use_lora = use_lora
-        self.output_dir = output_dir
+
+        # 创建带模型名和时间戳的输出目录
+        model_name = model_name_or_path.split("/")[-1].replace(" ", "_")  # 从路径中提取模型名
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")  # 生成时间戳
+        self.output_dir = str(Path(output_dir) / model_name / timestamp)  # 创建子目录路径
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
         self.reward_handler = RLRewardHandler()
@@ -226,7 +233,7 @@ class RLTrainer:
         dataset_name_or_path: str = "openai/gsm8k",
         format_type: Literal["sft", "rl"] = "sft",
         split: str = "train",
-        max_samples: int = 100,
+        max_samples: int = 32,
     ) -> dict[str, Any]:
 
         format_type = format_type.lower().strip()
