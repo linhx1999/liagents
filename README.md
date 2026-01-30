@@ -159,10 +159,13 @@ pytest --cov=liagents --cov-report=html
 
 ```bash
 # 添加运行时依赖
-uv pip add package-name
+uv add package-name
 
 # 添加开发依赖
-uv pip add --dev package-name
+uv add --dev package-name
+
+# 添加特定组依赖
+uv add --group example package-name
 
 # 同步依赖（更新 uv.lock）
 uv sync
