@@ -37,8 +37,8 @@ class RLTrainer:
 
     # 模型和输出配置
     model_name_or_path: str
-    tokenizer: Any = None
     output_dir: str
+    tokenizer: AutoTokenizer
 
     # 训练配置
     algorithm: str = "sft"
@@ -127,8 +127,7 @@ class RLTrainer:
 
     def train(
         self,
-        algorithm: str = "sft",
-        model_name: Optional[str] = None,
+        algorithm: Literal["sft", "grpo"] = "sft",
         dataset_name: Optional[str] = None,
         batch_size: int = 4,
         num_epochs: int = 2,
@@ -148,7 +147,6 @@ class RLTrainer:
 
         Args:
             algorithm: 训练算法 (sft/grpo)，默认为 "sft"
-            model_name: 模型名称，默认使用初始化时的值
             dataset_name: 数据集名称，默认使用初始化时的值
             max_samples: 最大样本数，-1 表示全量使用
             batch_size: 批次大小，默认为 4
@@ -166,12 +164,10 @@ class RLTrainer:
             wandb_project: wandb 项目名称
         """
         # 使用传入的参数，如果没有则使用类属性
-        algorithm = algorithm.lower().strip()
-        model_name = model_name or self.model_name_or_path
+        model_name = self.model_name_or_path
 
         print(f"\n{'='*60}\n")
-        print(f"开始 {algorithm.upper()} 训练")
-        print(f"模型: {model_name}")
+        print(f"开始 {algorithm.upper()} 训练，模型: {model_name}")
         if custom_dataset is not None:
             print(f"数据集: 自定义数据集")
         else:
@@ -204,6 +200,7 @@ class RLTrainer:
                 lora_rank=lora_rank,
                 lora_alpha=lora_alpha,
                 batch_size=batch_size,
+                learning_rate=learning_rate,
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
                 custom_dataset=custom_dataset,
@@ -241,6 +238,7 @@ class RLTrainer:
         lora_rank: int,
         lora_alpha: int,
         batch_size: int,
+        learning_rate: float,
         use_fp16: bool = False,
         use_bf16: bool = False,
         custom_dataset=None,
@@ -255,6 +253,7 @@ class RLTrainer:
             output_dir=self.output_dir,
             num_train_epochs=num_epochs,
             per_device_train_batch_size=batch_size,
+            learning_rate=learning_rate,
             use_lora=use_lora,
             lora_r=lora_rank,
             lora_alpha=lora_alpha,
