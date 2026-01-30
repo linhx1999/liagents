@@ -40,12 +40,15 @@ class RLTrainer:
     output_dir: str
     tokenizer: AutoTokenizer
 
+    # 数据集配置
+    dataset_name_or_path: str
+    dataset: Optional[Any] = None
+    max_samples: int = -1  # -1 表示全量使用数据集
+
     # 训练配置
-    algorithm: str = "sft"
     num_epochs: int = 2
     learning_rate: float = 5e-5
     batch_size: int = 4
-    max_samples: int = -1  # -1 表示全量使用数据集
 
     # LoRA配置
     use_lora: bool = True
@@ -55,9 +58,6 @@ class RLTrainer:
     # 精度配置
     use_fp16: bool = False
     use_bf16: bool = True
-
-    # 数据集配置
-    dataset: Optional[Any] = None
 
     def __init__(
         self,
@@ -102,6 +102,9 @@ class RLTrainer:
         Returns:
             包含加载结果信息的字典
         """
+        # 设置模型参数
+        self.dataset_name_or_path = dataset_name_or_path
+
         if format_type in ("sft", "rl"):
             self.dataset = create_dataset(
                 dataset_name_or_path=dataset_name_or_path,
@@ -143,38 +146,22 @@ class RLTrainer:
         use_tensorboard: bool = True,
         wandb_project: Optional[str] = None,
     ) -> str:
-        """训练模型
+        # 设置类参数
+        self.num_epochs = num_epochs
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
 
-        Args:
-            algorithm: 训练算法 (sft/grpo)，默认为 "sft"
-            dataset_name: 数据集名称，默认使用初始化时的值
-            max_samples: 最大样本数，-1 表示全量使用
-            batch_size: 批次大小，默认为 4
-            num_epochs: 训练轮数，默认为 2
-            learning_rate: 学习率，默认为 5e-5
-            use_lora: 是否使用LoRA，默认为 True
-            lora_rank: LoRA rank，默认为 8
-            lora_alpha: LoRA alpha，默认为 16
-            use_fp16: 是否使用 FP16 混合精度，默认为 False
-            use_bf16: 是否使用 BF16 混合精度，默认为 False
-            custom_dataset: 自定义数据集
-            custom_reward: 自定义奖励函数
-            use_wandb: 使用 wandb 监控，默认为 False
-            use_tensorboard: 使用 tensorboard 监控，默认为 True
-            wandb_project: wandb 项目名称
-        """
-        # 使用传入的参数，如果没有则使用类属性
-        model_name = self.model_name_or_path
+        model_name = self.model_name_or_path.split("/")[-1].replace(" ", "_")
 
         print(f"\n{'='*60}\n")
-        print(f"开始 {algorithm.upper()} 训练，模型: {model_name}")
+        print(f"开始 {algorithm} 训练，模型: {model_name}")
         if custom_dataset is not None:
             print(f"数据集: 自定义数据集")
         else:
             print(f"数据集: {dataset_name or '已注册的数据集'}")
-        print(f"训练轮数: {num_epochs}")
+        print(f"训练轮数: {self.num_epochs}")
         print(f"输出目录: {self.output_dir}")
-        print(f"算法: {algorithm.upper()}")
+        print(f"算法: {algorithm}")
         if custom_reward is not None:
             print(f"奖励函数: 自定义奖励函数")
 
@@ -195,12 +182,9 @@ class RLTrainer:
 
         if algorithm == "sft":
             result = self._train_sft(
-                num_epochs=num_epochs,
                 use_lora=use_lora,
                 lora_rank=lora_rank,
                 lora_alpha=lora_alpha,
-                batch_size=batch_size,
-                learning_rate=learning_rate,
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
                 custom_dataset=custom_dataset,
@@ -233,12 +217,9 @@ class RLTrainer:
 
     def _train_sft(
         self,
-        num_epochs: int,
         use_lora: bool,
         lora_rank: int,
         lora_alpha: int,
-        batch_size: int,
-        learning_rate: float,
         use_fp16: bool = False,
         use_bf16: bool = False,
         custom_dataset=None,
@@ -251,9 +232,9 @@ class RLTrainer:
         config = TrainingConfig(
             model_name_or_path=self.model_name_or_path,
             output_dir=self.output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=batch_size,
-            learning_rate=learning_rate,
+            num_train_epochs=self.num_epochs,
+            per_device_train_batch_size=self.batch_size,
+            learning_rate=self.learning_rate,
             use_lora=use_lora,
             lora_r=lora_rank,
             lora_alpha=lora_alpha,
@@ -292,6 +273,6 @@ class RLTrainer:
             "algorithm": "SFT",
             "model": self.model_name_or_path,
             "output_dir": self.output_dir,
-            "num_epochs": num_epochs,
+            "num_epochs": self.num_epochs,
             "dataset_size": len(dataset),
         }
