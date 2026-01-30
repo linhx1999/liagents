@@ -28,11 +28,11 @@ class RLTrainer:
     - 评估模型 (evaluate)
     """
 
-    def __init__(self, model_name: str = "Qwen/Qwen3-0.6B", use_lora: bool = True, output_dir: str = "./outputs"):
-        self.model_name = model_name
+    def __init__(self, model_name_or_path: str = "Qwen/Qwen3-0.6B", use_lora: bool = True, output_dir: str = "./outputs"):
+        self.model_name = model_name_or_path
         self.use_lora = use_lora
         self.output_dir = output_dir
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
         self.training_core = RLTrainingCore()
         self.reward_handler = RLRewardHandler()
@@ -42,7 +42,7 @@ class RLTrainer:
     def train(
         self,
         algorithm: str = "sft",
-        model_name: str = "Qwen/Qwen3-0.6B",
+        model_name_or_path: str = "Qwen/Qwen3-0.6B",
         dataset_name: str = "gsm8k",
         num_epochs: int = 2,
         output_dir: str = "./outputs",
@@ -146,7 +146,7 @@ class RLTrainer:
         format_type: Literal["sft", "rl"] = "sft",
         split: str = "train",
         max_samples: int = 100,
-    ) -> str:
+    ) -> dict[str, Any]:
 
         format_type = format_type.lower().strip()
         if format_type in ["sft", "rl"]:
@@ -158,10 +158,10 @@ class RLTrainer:
                 tokenizer=self.tokenizer
             )
         else:
-            return json.dumps({
+            return {
                 "status": "error",
                 "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl"
-            }, ensure_ascii=False, indent=2)
+            }
 
         result = {
             "status": "success",
@@ -170,4 +170,4 @@ class RLTrainer:
             "dataset_size": len(dataset),
             "sample_examples": dataset[:3] if len(dataset) > 3 else []
         }
-        return json.dumps(result, ensure_ascii=False, indent=2)
+        return result
