@@ -120,6 +120,10 @@ class RLTrainer:
         use_lora: bool = True,
         lora_rank: int = 8,
         lora_alpha: int = 16,
+        lora_target_modules: list[str] = ["q_proj", "v_proj"],
+        lora_dropout: float = 0.05,
+        lora_bias: Literal["none", "all", "lora_only"] = "none",
+        lora_task_type: str = "CAUSAL_LM",
         use_fp16: bool = False,
         use_bf16: bool = False,
         custom_dataset: Optional[Any] = None,
@@ -160,6 +164,10 @@ class RLTrainer:
                 use_lora=use_lora,
                 lora_rank=lora_rank,
                 lora_alpha=lora_alpha,
+                lora_target_modules=lora_target_modules,
+                lora_dropout=lora_dropout,
+                lora_bias=lora_bias,
+                lora_task_type=lora_task_type,
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
                 use_tensorboard=use_tensorboard,
@@ -190,6 +198,10 @@ class RLTrainer:
         use_lora: bool,
         lora_rank: int,
         lora_alpha: int,
+        lora_target_modules: list[str] = ["q_proj", "v_proj"],
+        lora_dropout: float = 0.05,
+        lora_bias: Literal["none", "all", "lora_only"] = "none",
+        lora_task_type: str = "CAUSAL_LM",
         use_fp16: bool = False,
         use_bf16: bool = False,
         use_tensorboard: bool = True,
@@ -232,13 +244,13 @@ class RLTrainer:
             lora_config = LoraConfig(
                 r=lora_rank,
                 lora_alpha=lora_alpha,
-                target_modules=["q_proj", "v_proj"],
-                lora_dropout=0.05,
-                bias="none",
-                task_type="CAUSAL_LM",
+                target_modules=lora_target_modules,
+                lora_dropout=lora_dropout,
+                bias=lora_bias,
+                task_type=lora_task_type,
             )
             model = get_peft_model(model, lora_config)
-            print(f"LoRA 已应用 (rank={lora_rank}, alpha={lora_alpha})")
+            print(f"LoRA 已应用 (rank={lora_rank}, alpha={lora_alpha}, target_modules={lora_target_modules})")
 
         print("模型加载完成")
 
