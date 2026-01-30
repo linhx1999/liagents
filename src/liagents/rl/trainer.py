@@ -40,25 +40,97 @@ class RLTrainer:
     - 评估模型 (evaluate)
     """
 
+    # 模型配置
     model_name_or_path: str
-    custom_dataset: Optional[Any] = None
+    use_lora: bool
+    lora_rank: int
+    lora_alpha: int
+
+    # 训练配置
+    algorithm: str
+    num_epochs: int
+    learning_rate: float
+    batch_size: int
+    max_samples: int
+
+    # 精度配置
+    use_fp16: bool
+    use_bf16: bool
+
+    # 输出配置
+    output_dir: str
+
+    # 数据集配置
+    dataset_name: str
+    custom_dataset: Optional[Any]
+    dataset: Optional[Any]
+
+    # 奖励配置
+    custom_reward: Optional[Any]
+
+    # 监控配置
+    use_wandb: bool
+    use_tensorboard: bool
+    wandb_project: Optional[str]
 
     def __init__(
         self,
         model_name_or_path: str = "Qwen/Qwen3-0.6B",
         use_lora: bool = True,
+        lora_rank: int = 8,
+        lora_alpha: int = 16,
         output_dir: str = "./outputs",
+        algorithm: str = "sft",
+        num_epochs: int = 2,
+        learning_rate: float = 5e-5,
+        batch_size: int = 4,
+        max_samples: int = -1,
+        use_fp16: bool = False,
+        use_bf16: bool = False,
+        dataset_name: str = "gsm8k",
+        use_wandb: bool = False,
+        use_tensorboard: bool = True,
+        wandb_project: Optional[str] = None,
     ):
+        # 模型配置
         self.model_name_or_path = model_name_or_path
         self.use_lora = use_lora
+        self.lora_rank = lora_rank
+        self.lora_alpha = lora_alpha
 
+        # 训练配置
+        self.algorithm = algorithm
+        self.num_epochs = num_epochs
+        self.learning_rate = learning_rate
+        self.batch_size = batch_size
+        self.max_samples = max_samples
+
+        # 精度配置
+        self.use_fp16 = use_fp16
+        self.use_bf16 = use_bf16
+
+        # 输出配置
+        self.output_dir = output_dir
         # 创建带模型名和时间戳的输出目录
-        model_name = model_name_or_path.split("/")[-1].replace(" ", "_")  # 从路径中提取模型名
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")  # 生成时间戳
-        self.output_dir = str(Path(output_dir) / model_name / timestamp)  # 创建子目录路径
+        model_name = model_name_or_path.split("/")[-1].replace(" ", "_")
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.output_dir = str(Path(output_dir) / model_name / timestamp)
 
+        # 数据集配置
+        self.dataset_name = dataset_name
+        self.custom_dataset = None
+        self.dataset = None
+
+        # 奖励配置
+        self.custom_reward = None
+
+        # 监控配置
+        self.use_wandb = use_wandb
+        self.use_tensorboard = use_tensorboard
+        self.wandb_project = wandb_project
+
+        # 初始化 tokenizer 和 handlers
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-
         self.reward_handler = RLRewardHandler()
         self.evaluation_handler = RLEvaluationHandler()
 
@@ -67,6 +139,8 @@ class RLTrainer:
         max_samples: Optional[int],
         num_epochs: int,
         use_lora: bool,
+        lora_rank: int,
+        lora_alpha: int,
         batch_size: int,
         use_fp16: bool = False,
         use_bf16: bool = False,
@@ -83,6 +157,8 @@ class RLTrainer:
             num_train_epochs=num_epochs,
             per_device_train_batch_size=batch_size,
             use_lora=use_lora,
+            lora_r=lora_rank,
+            lora_alpha=lora_alpha,
             use_fp16=use_fp16,
             use_bf16=use_bf16,
             use_wandb=use_wandb,
@@ -94,9 +170,9 @@ class RLTrainer:
         setup_training_environment(config)
 
         # 加载数据集
-        if self.custom_dataset is not None:
+        if custom_dataset is not None:
             # 使用自定义数据集
-            dataset = self.custom_dataset
+            dataset = custom_dataset
             print(f"使用自定义数据集: {len(dataset)} 个样本")
         elif self.dataset is not None:
             dataset = self.dataset
@@ -124,58 +200,79 @@ class RLTrainer:
 
     def train(
         self,
-        algorithm: str = "sft",
-        model_name: str = "Qwen/Qwen3-0.6B",
-        dataset_name: str = "gsm8k",
-        max_samples: int = -1,
-        batch_size: int = 4,
-        output_dir: str = "./outputs",
-        num_epochs: int = 2,
-        learning_rate: float = 5e-5,
-        use_lora: bool = True,
-        lora_r: int = 8,
-        lora_alpha: int = 16,
-        use_fp16: bool = False,
-        use_bf16: bool = False,
-        custom_dataset: Any = None,
-        custom_reward: Any = None,
-        use_wandb: bool = False,
-        use_tensorboard: bool = True,
-        wandb_project: str | None = None,
+        algorithm: Optional[str] = None,
+        model_name: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        max_samples: Optional[int] = None,
+        batch_size: Optional[int] = None,
+        output_dir: Optional[str] = None,
+        num_epochs: Optional[int] = None,
+        learning_rate: Optional[float] = None,
+        use_lora: Optional[bool] = None,
+        lora_rank: Optional[int] = None,
+        lora_alpha: Optional[int] = None,
+        use_fp16: Optional[bool] = None,
+        use_bf16: Optional[bool] = None,
+        custom_dataset: Optional[Any] = None,
+        custom_reward: Optional[Any] = None,
+        use_wandb: Optional[bool] = None,
+        use_tensorboard: Optional[bool] = None,
+        wandb_project: Optional[str] = None,
     ) -> str:
         """训练模型
 
         Args:
-            algorithm: 训练算法 (sft/grpo)
-            dataset_name: 数据集名称
-            model_name: 模型名称
-            max_samples: 最大样本数
-            output_dir: 输出目录
-            num_epochs: 训练轮数
-            learning_rate: 学习率
-            batch_size: 批次大小
-            use_lora: 是否使用LoRA
-            lora_r: LoRA rank
-            lora_alpha: LoRA alpha
-            use_fp16: 是否使用 FP16 混合精度
-            use_bf16: 是否使用 BF16 混合精度
-            custom_dataset: 自定义数据集
-            custom_reward: 自定义奖励函数
-            use_wandb: 使用 wandb 监控
-            use_tensorboard: 使用 tensorboard 监控
-            wandb_project: wandb 项目名称
+            algorithm: 训练算法 (sft/grpo)，默认使用初始化时的值
+            model_name: 模型名称，默认使用初始化时的值
+            dataset_name: 数据集名称，默认使用初始化时的值
+            max_samples: 最大样本数，默认使用初始化时的值
+            batch_size: 批次大小，默认使用初始化时的值
+            output_dir: 输出目录，默认使用初始化时的值
+            num_epochs: 训练轮数，默认使用初始化时的值
+            learning_rate: 学习率，默认使用初始化时的值
+            use_lora: 是否使用LoRA，默认使用初始化时的值
+            lora_rank: LoRA rank，默认使用初始化时的值
+            lora_alpha: LoRA alpha，默认使用初始化时的值
+            use_fp16: 是否使用 FP16 混合精度，默认使用初始化时的值
+            use_bf16: 是否使用 BF16 混合精度，默认使用初始化时的值
+            custom_dataset: 自定义数据集，会覆盖类属性
+            custom_reward: 自定义奖励函数，会覆盖类属性
+            use_wandb: 使用 wandb 监控，默认使用初始化时的值
+            use_tensorboard: 使用 tensorboard 监控，默认使用初始化时的值
+            wandb_project: wandb 项目名称，默认使用初始化时的值
         """
-        algorithm = algorithm.lower().strip()
+        # 使用传入的参数，如果没有则使用类属性
+        algorithm = (algorithm or self.algorithm).lower().strip()
+        model_name = model_name or self.model_name_or_path
+        dataset_name = dataset_name or self.dataset_name
+        max_samples = max_samples if max_samples is not None else self.max_samples
+        batch_size = batch_size if batch_size is not None else self.batch_size
+        num_epochs = num_epochs if num_epochs is not None else self.num_epochs
+        learning_rate = learning_rate if learning_rate is not None else self.learning_rate
+        use_lora = use_lora if use_lora is not None else self.use_lora
+        lora_rank = lora_rank if lora_rank is not None else self.lora_rank
+        lora_alpha = lora_alpha if lora_alpha is not None else self.lora_alpha
+        use_fp16 = use_fp16 if use_fp16 is not None else self.use_fp16
+        use_bf16 = use_bf16 if use_bf16 is not None else self.use_bf16
+        use_wandb = use_wandb if use_wandb is not None else self.use_wandb
+        use_tensorboard = use_tensorboard if use_tensorboard is not None else self.use_tensorboard
+        wandb_project = wandb_project if wandb_project is not None else self.wandb_project
+
+        # 临时保存自定义参数（不影响类属性）
+        if custom_dataset is not None:
+            self.custom_dataset = custom_dataset
+        if custom_reward is not None:
+            self.custom_reward = custom_reward
 
         print(f"\n{'='*60}\n")
         print(f"开始 {algorithm.upper()} 训练")
         print(f"模型: {model_name}")
         if custom_dataset:
-            print(f"数据集: 自定义数据集 ")
+            print(f"数据集: 自定义数据集")
         else:
             print(f"数据集: {dataset_name}")
         print(f"训练轮数: {num_epochs}")
-        print(f"输出目录: {output_dir}")
+        print(f"输出目录: {self.output_dir}")
         print(f"算法: {algorithm.upper()}")
         if custom_reward:
             print(f"奖励函数: 自定义奖励函数")
@@ -200,10 +297,12 @@ class RLTrainer:
                 max_samples=max_samples,
                 num_epochs=num_epochs,
                 use_lora=use_lora,
+                lora_rank=lora_rank,
+                lora_alpha=lora_alpha,
                 batch_size=batch_size,
                 use_fp16=use_fp16,
                 use_bf16=use_bf16,
-                custom_dataset=custom_dataset,
+                custom_dataset=self.custom_dataset,
                 use_wandb=use_wandb,
                 use_tensorboard=use_tensorboard,
                 wandb_project=wandb_project,
