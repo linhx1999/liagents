@@ -40,7 +40,6 @@ class RLTrainer:
     tokenizer: Any = None
     output_dir: str
 
-
     # 训练配置
     algorithm: str = "sft"
     num_epochs: int = 2
@@ -84,69 +83,6 @@ class RLTrainer:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
         # self.reward_handler = RLRewardHandler()
         # self.evaluation_handler = RLEvaluationHandler()
-
-    def _train_sft(
-        self,
-        num_epochs: int,
-        use_lora: bool,
-        lora_rank: int,
-        lora_alpha: int,
-        batch_size: int,
-        use_fp16: bool = False,
-        use_bf16: bool = False,
-        custom_dataset=None,
-        use_wandb: bool = False,
-        use_tensorboard: bool = True,
-        wandb_project: Optional[str] = None,
-    ) -> dict[str, Any]:
-        """执行SFT训练"""
-        # 创建配置
-        config = TrainingConfig(
-            model_name_or_path=self.model_name_or_path,
-            output_dir=self.output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=batch_size,
-            use_lora=use_lora,
-            lora_r=lora_rank,
-            lora_alpha=lora_alpha,
-            use_fp16=use_fp16,
-            use_bf16=use_bf16,
-            use_wandb=use_wandb,
-            use_tensorboard=use_tensorboard,
-            wandb_project=wandb_project,
-        )
-
-        # 设置环境
-        setup_training_environment(config)
-
-        # 加载数据集
-        if custom_dataset is not None:
-            # 使用自定义数据集
-            dataset = custom_dataset
-            print(f"使用自定义数据集: {len(dataset)} 个样本")
-        elif self.dataset is not None:
-            dataset = self.dataset
-            print(f"使用注册的数据集: {len(dataset)} 个样本")
-        else:
-            raise ValueError("未指定数据集，请先加载数据集")
-
-        # 创建训练器
-        trainer_wrapper = SFTTrainerWrapper(config=config, dataset=dataset)
-
-        # 开始训练
-        trainer_wrapper.train()
-
-        # 保存模型
-        trainer_wrapper.save_model()
-
-        return {
-            "status": "success",
-            "algorithm": "SFT",
-            "model": self.model_name_or_path,
-            "output_dir": self.output_dir,
-            "num_epochs": num_epochs,
-            "dataset_size": len(dataset),
-        }
 
     def train(
         self,
@@ -297,3 +233,66 @@ class RLTrainer:
             "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else [],
         }
         return result
+
+    def _train_sft(
+        self,
+        num_epochs: int,
+        use_lora: bool,
+        lora_rank: int,
+        lora_alpha: int,
+        batch_size: int,
+        use_fp16: bool = False,
+        use_bf16: bool = False,
+        custom_dataset=None,
+        use_wandb: bool = False,
+        use_tensorboard: bool = True,
+        wandb_project: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """执行SFT训练"""
+        # 创建配置
+        config = TrainingConfig(
+            model_name_or_path=self.model_name_or_path,
+            output_dir=self.output_dir,
+            num_train_epochs=num_epochs,
+            per_device_train_batch_size=batch_size,
+            use_lora=use_lora,
+            lora_r=lora_rank,
+            lora_alpha=lora_alpha,
+            use_fp16=use_fp16,
+            use_bf16=use_bf16,
+            use_wandb=use_wandb,
+            use_tensorboard=use_tensorboard,
+            wandb_project=wandb_project,
+        )
+
+        # 设置环境
+        setup_training_environment(config)
+
+        # 加载数据集
+        if custom_dataset is not None:
+            # 使用自定义数据集
+            dataset = custom_dataset
+            print(f"使用自定义数据集: {len(dataset)} 个样本")
+        elif self.dataset is not None:
+            dataset = self.dataset
+            print(f"使用注册的数据集: {len(dataset)} 个样本")
+        else:
+            raise ValueError("未指定数据集，请先加载数据集")
+
+        # 创建训练器
+        trainer_wrapper = SFTTrainerWrapper(config=config, dataset=dataset)
+
+        # 开始训练
+        trainer_wrapper.train()
+
+        # 保存模型
+        trainer_wrapper.save_model()
+
+        return {
+            "status": "success",
+            "algorithm": "SFT",
+            "model": self.model_name_or_path,
+            "output_dir": self.output_dir,
+            "num_epochs": num_epochs,
+            "dataset_size": len(dataset),
+        }
