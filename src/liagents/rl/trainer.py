@@ -18,11 +18,6 @@ from .core import (
 from .handler.reward_handler import RLRewardHandler
 from .handler.evaluation_handler import RLEvaluationHandler
 from .datasets import create_dataset
-from .rewards import (
-    create_accuracy_reward,
-    create_length_penalty_reward,
-    create_step_reward,
-)
 from .utils import check_trl_installation
 
 
@@ -87,7 +82,6 @@ class RLTrainer:
         max_samples: int = -1,
         use_fp16: bool = False,
         use_bf16: bool = False,
-        dataset_name: str = "gsm8k",
         use_wandb: bool = False,
         use_tensorboard: bool = True,
         wandb_project: Optional[str] = None,
@@ -117,7 +111,6 @@ class RLTrainer:
         self.output_dir = str(Path(output_dir) / model_name / timestamp)
 
         # 数据集配置
-        self.dataset_name = dataset_name
         self.custom_dataset = None
         self.dataset = None
 
@@ -136,7 +129,6 @@ class RLTrainer:
 
     def _train_sft(
         self,
-        max_samples: Optional[int],
         num_epochs: int,
         use_lora: bool,
         lora_rank: int,
@@ -205,7 +197,6 @@ class RLTrainer:
         dataset_name: Optional[str] = None,
         max_samples: Optional[int] = None,
         batch_size: Optional[int] = None,
-        output_dir: Optional[str] = None,
         num_epochs: Optional[int] = None,
         learning_rate: Optional[float] = None,
         use_lora: Optional[bool] = None,
@@ -244,7 +235,6 @@ class RLTrainer:
         # 使用传入的参数，如果没有则使用类属性
         algorithm = (algorithm or self.algorithm).lower().strip()
         model_name = model_name or self.model_name_or_path
-        dataset_name = dataset_name or self.dataset_name
         max_samples = max_samples if max_samples is not None else self.max_samples
         batch_size = batch_size if batch_size is not None else self.batch_size
         num_epochs = num_epochs if num_epochs is not None else self.num_epochs
@@ -294,7 +284,6 @@ class RLTrainer:
 
         if algorithm == "sft":
             result = self._train_sft(
-                max_samples=max_samples,
                 num_epochs=num_epochs,
                 use_lora=use_lora,
                 lora_rank=lora_rank,
@@ -348,8 +337,7 @@ class RLTrainer:
         Returns:
             包含加载结果信息的字典
         """
-        format_type = format_type.lower().strip()
-        if format_type in ["sft", "rl"]:
+        if format_type in ("sft", "rl"):
             self.dataset = create_dataset(
                 dataset_name_or_path=dataset_name_or_path,
                 format_type=format_type,
