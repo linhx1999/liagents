@@ -40,11 +40,6 @@ class RLTrainer:
     output_dir: str
     tokenizer: AutoTokenizer
 
-    # 数据集配置
-    dataset_name_or_path: str
-    dataset: Optional[Any] = None
-    max_samples: int = -1  # -1 表示全量使用数据集
-
     # 训练配置
     num_epochs: int = 2
     learning_rate: float = 5e-5
@@ -102,9 +97,6 @@ class RLTrainer:
         Returns:
             包含加载结果信息的字典
         """
-        # 设置模型参数
-        self.dataset_name_or_path = dataset_name_or_path
-
         if format_type in ("sft", "rl"):
             self.dataset = create_dataset(
                 dataset_name_or_path=dataset_name_or_path,
@@ -119,14 +111,13 @@ class RLTrainer:
                 "message": f"不支持的数据格式: {format_type}。支持的格式: sft, rl",
             }
 
-        result = {
+        return {
             "status": "success",
             "format_type": format_type,
             "split": split,
             "dataset_size": len(self.dataset),
             "sample_examples": self.dataset[:3] if len(self.dataset) > 3 else [],
         }
-        return result
 
     def train(
         self,
