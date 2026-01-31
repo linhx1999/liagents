@@ -1,5 +1,4 @@
 from liagents.rl import RLTrainer
-import json
 
 # 创建训练工具
 rl_trainer = RLTrainer("/root/autodl-tmp/outputs/Qwen2.5-0.5B-Instruct/20260131-160503")
