@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "linhx", email = "linhx1999@163.com" }
 ]
-requires-python = "~=3.12"
+requires-python = "~=3.12.0"
 dependencies = [
     "openai~=1.109.0",
     "tavily~=1.1.0",
@@ -32,5 +32,5 @@ example = [
 rl = [
     "trl~=0.26.2",
     "tensorboardX~=2.6.0",
-    "peft"
+    "peft~=0.18.0"
 ]

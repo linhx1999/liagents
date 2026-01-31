@@ -11,6 +11,21 @@
 
 ## 快速开始
 
+## 安装uv
+
+```bash
+# macOS 或 Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 或者PyPI (通过 pip)
+pip install uv
+```
+
+
+
 ### 安装依赖
 
 ```bash
