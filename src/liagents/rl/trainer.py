@@ -317,6 +317,7 @@ class RLTrainer:
         3. 生成预测
         4. 计算奖励/准确率
         5. 返回评估结果
+        6. 保存评估结果到文件（使用类初始化时的 output_dir）
 
         Args:
             max_samples: 最大评估样本数（-1 表示使用全量数据集）
@@ -371,6 +372,7 @@ class RLTrainer:
             print("生成预测...")
             completions = []
             ground_truths = []
+            prompts = []
 
             # 创建迭代器
             from tqdm import tqdm
@@ -379,6 +381,7 @@ class RLTrainer:
             for i in iterator:
                 prompt = dataset[i]["prompt"]
                 ground_truth = dataset[i]["ground_truth"]
+                prompts.append(prompt)
 
                 # 生成回答
                 inputs = self.tokenizer(prompt, return_tensors="pt").to(device)
@@ -407,6 +410,22 @@ class RLTrainer:
             avg_reward = sum(rewards) / len(rewards)
             accuracy = avg_reward  # 对于准确性奖励，平均奖励就是准确率
 
+            # 构建详细结果
+            detailed_results = []
+            for i, (prompt, completion, ground_truth, reward) in enumerate(
+                zip(prompts, completions, ground_truths, rewards)
+            ):
+                detailed_results.append(
+                    {
+                        "index": i,
+                        "prompt": prompt,
+                        "completion": completion,
+                        "ground_truth": ground_truth,
+                        "reward": reward,
+                        "correct": bool(reward),
+                    }
+                )
+
             result = {
                 "status": "success",
                 "model_path": model_path,
@@ -415,11 +434,32 @@ class RLTrainer:
                 "accuracy": f"{accuracy:.2%}",
                 "average_reward": f"{avg_reward:.4f}",
                 "device": device,
+                "eval_config": {
+                    "split": split,
+                    "max_new_tokens": max_new_tokens,
+                    "temperature": temperature,
+                    "do_sample": do_sample,
+                },
+                "detailed_results": detailed_results,
             }
 
             print(f"\n评估完成!")
             print(f"  准确率: {accuracy:.2%}")
             print(f"  平均奖励: {avg_reward:.4f}")
+            print(f"  正确样本: {sum(rewards)}/{len(rewards)}")
+
+            # 保存评估结果
+            # 创建带时间戳的评估文件夹
+            eval_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            eval_dir = Path(self.output_dir) / f"evaluation_{eval_timestamp}"
+            eval_dir.mkdir(parents=True, exist_ok=True)
+
+            results_file = eval_dir / "evaluation_results.json"
+
+            with open(results_file, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+
+            print(f"  结果已保存至: {results_file}")
 
             return json.dumps(result, ensure_ascii=False, indent=2)
 
