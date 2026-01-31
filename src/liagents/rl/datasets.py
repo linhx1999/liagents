@@ -130,6 +130,7 @@ def create_dataset(
     max_samples: Optional[int] = -1,
     split: str = "train",
     tokenizer: Optional[AutoTokenizer] = None,
+    is_think: bool = False,
 ) -> Dataset:
     """创建数据集
 
@@ -139,6 +140,7 @@ def create_dataset(
         max_samples: 最大样本数，-1 或 None 表示全量使用
         split: 数据集分割
         tokenizer: Tokenizer对象
+        is_think: 是否构建思维链
 
     Returns:
         格式化后的数据集
@@ -150,6 +152,7 @@ def create_dataset(
             max_samples=max_samples,
             format_type=format_type,
             tokenizer=tokenizer,
+            is_think=is_think,
         )
         return dataset_wrapper.get_dataset()
     else:
@@ -170,6 +173,7 @@ class GSM8KDataset(BaseDataset):
         max_samples: int = -1,
         format_type: Literal["sft", "rl"] = "sft",
         tokenizer: Optional[AutoTokenizer] = None,  # 用于RL格式应用chat template
+        is_think: bool = False,
     ):
         """
         初始化GSM8K数据集
@@ -180,7 +184,9 @@ class GSM8KDataset(BaseDataset):
             max_samples: 最大样本数，-1 或 None 表示全量使用
             format_type: 数据格式类型 ("sft" 用于监督学习, "rl" 用于强化学习)
             tokenizer: Tokenizer对象,用于RL格式应用chat template
+            is_think: 是否构建思维链
         """
+        self.is_think = is_think
         super().__init__(
             dataset_name_or_path=dataset_name_or_path,
             split=split,
@@ -211,9 +217,16 @@ class GSM8KDataset(BaseDataset):
             reasoning = answer
             final_answer = ""
 
-        # 构造prompt和completion
-        prompt = f"Question: {question}\n\nLet's solve this step by step:\n"
-        completion = f"{reasoning}\n\nFinal Answer: {final_answer}"
+        # prompt 保持不变
+        prompt = f"Question: {question}\n\nPlease reason step by step, and put your final answer within \\boxed{{}}."
+
+        # 根据 is_think 参数构建不同的 completion
+        if self.is_think:
+            # 思维链格式：在 completion 开头添加结构化思考引导
+            completion = f"""<think>\n{reasoning}\n<think>\n\nFinal Answer: \\boxed{final_answer}"""
+        else:
+            # 标准格式
+            completion = f"\n{reasoning}\n\nFinal Answer: \\boxed{{{final_answer}}}"
 
         return {
             "prompt": prompt,
@@ -244,7 +257,7 @@ class GSM8KDataset(BaseDataset):
         else:
             final_answer = answer.strip()
 
-        # 构造prompt内容
+        # prompt 保持不变（无论 is_think 参数如何）
         prompt_content = f"Question: {question}\n\nLet's solve this step by step:"
 
         # 如果提供了tokenizer,应用chat template

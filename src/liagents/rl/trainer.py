@@ -75,6 +75,7 @@ class RLTrainer:
         format_type: Literal["sft", "rl"] = "sft",
         split: str = "train",
         max_samples: int = -1,
+        is_think: bool = False,
     ) -> dict[str, Any]:
         """加载数据集
 
@@ -83,6 +84,7 @@ class RLTrainer:
             format_type: 数据格式类型 ("sft" 或 "rl")
             split: 数据集分割 ("train" 或 "test")
             max_samples: 最大样本数，-1 表示全量使用
+            is_think: 是否构建思维链，默认 False
 
         Returns:
             包含加载结果信息的字典
@@ -94,6 +96,7 @@ class RLTrainer:
                 max_samples=max_samples,
                 split=split,
                 tokenizer=self.tokenizer,
+                is_think=is_think,
             )
         else:
             return {
