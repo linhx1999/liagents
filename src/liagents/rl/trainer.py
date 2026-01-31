@@ -449,9 +449,7 @@ class RLTrainer:
             print(f"  正确样本: {sum(rewards)}/{len(rewards)}")
 
             # 保存评估结果
-            # 创建带时间戳的评估文件夹
-            eval_timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-            eval_dir = Path(self.output_dir) / f"evaluation_{eval_timestamp}"
+            eval_dir = Path(self.output_dir) / f"evaluation"
             eval_dir.mkdir(parents=True, exist_ok=True)
 
             results_file = eval_dir / "evaluation_results.json"
