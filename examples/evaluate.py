@@ -9,7 +9,7 @@ result = rl_trainer.load_dataset("/home/linhx/codebase/liagents/examples/dataset
 print(str(result))
 
 # 评估模型
-result = rl_trainer.evaluate(max_samples=4)
+result = rl_trainer.evaluate(max_samples=100)
 print(str(result))
 
 print(f"\n评估完成!")

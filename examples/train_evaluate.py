@@ -12,6 +12,6 @@ rl_trainer.load_dataset(
 result = rl_trainer.train()
 
 # 评估模型
-result = rl_trainer.evaluate(max_samples=4)
+result = rl_trainer.evaluate(max_samples=100)
 
 print(f"\n训练完成!")
