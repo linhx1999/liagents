@@ -38,6 +38,7 @@ class RLTrainer:
     trained_model_path: Optional[str] = None
 
     dataset: Optional[Any] = None
+    eval_dataset: Optional[Any] = None
 
     # 训练配置
     num_epochs: int = 2
@@ -126,6 +127,7 @@ class RLTrainer:
         lr_scheduler_type: str = "cosine",
         logging_steps: int = 5,
         save_steps: int = 500,
+        eval_ratio: float = 0.1,
         use_lora: bool = True,
         lora_rank: int = 8,
         lora_alpha: int = 16,
@@ -177,6 +179,7 @@ class RLTrainer:
                 lr_scheduler_type=lr_scheduler_type,
                 logging_steps=logging_steps,
                 save_steps=save_steps,
+                eval_ratio=eval_ratio,
                 use_lora=use_lora,
                 lora_rank=lora_rank,
                 lora_alpha=lora_alpha,
@@ -221,6 +224,7 @@ class RLTrainer:
         lr_scheduler_type: str = "cosine",
         logging_steps: int = 5,
         save_steps: int = 500,
+        eval_ratio: float = 0.1,
         use_lora: bool = True,
         lora_rank: int = 8,
         lora_alpha: int = 16,
@@ -282,6 +286,20 @@ class RLTrainer:
 
         print("模型加载完成")
 
+        # 从训练数据中切分验证集
+        from datasets import Dataset
+        if eval_ratio > 0 and self.dataset is not None:
+            dataset_dict = self.dataset.train_test_split(
+                test_size=eval_ratio, seed=42
+            )
+            train_dataset = dataset_dict["train"]
+            eval_dataset = dataset_dict["test"]
+            print(f"数据集划分: 训练集 {len(train_dataset)} 条, 验证集 {len(eval_dataset)} 条")
+        else:
+            train_dataset = self.dataset
+            eval_dataset = None
+            print(f"训练集: {len(train_dataset)} 条")
+
         config = SFTConfig(
             output_dir=self.output_dir,
             num_train_epochs=self.num_epochs,
@@ -303,7 +321,8 @@ class RLTrainer:
         trainer = SFTTrainer(
             model=model,
             args=config,
-            train_dataset=self.dataset,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
             processing_class=tokenizer,
         )
 
@@ -323,7 +342,8 @@ class RLTrainer:
             "model": self.model_name_or_path,
             "output_dir": self.output_dir,
             "num_epochs": self.num_epochs,
-            "dataset_size": len(self.dataset),
+            "train_dataset_size": len(train_dataset),
+            "eval_dataset_size": len(eval_dataset) if eval_dataset else 0,
         }
 
     def evaluate(
