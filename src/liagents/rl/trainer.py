@@ -123,11 +123,11 @@ class RLTrainer:
         optimizer: str = "adamw_torch",
         weight_decay: float = 0.01,
         warmup_ratio: float = 0.1,
-        gradient_accumulation_steps: int = 8,
+        gradient_accumulation_steps: int = 16,
         lr_scheduler_type: str = "cosine",
         logging_steps: int = 5,
-        save_steps: int = 500,
-        eval_ratio: float = 0.1,
+        save_steps: int = 100,
+        eval_ratio: float = 0.0,
         use_lora: bool = True,
         lora_rank: int = 8,
         lora_alpha: int = 16,
@@ -353,7 +353,7 @@ class RLTrainer:
         max_new_tokens: int = 1024,
         temperature: float = 0.0,
         do_sample: bool = False,
-        eval_batch_size: int = 8,
+        eval_batch_size: int = 1,
     ) -> str:
         """评估模型性能
 
