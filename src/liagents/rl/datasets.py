@@ -217,21 +217,31 @@ class GSM8KDataset(BaseDataset):
             reasoning = answer
             final_answer = ""
 
-        # prompt 保持不变
-        prompt = f"Question: {question}\n\nPlease reason step by step, and put your final answer within \\boxed{{}}."
+        # 构造prompt
+        prompt = f"Question: {question}\n\nPlease reason step by step, and put your final answer within \\boxed{{}}.\n"
 
         # 根据 is_think 参数构建不同的 completion
         if self.is_think:
             # 思维链格式：在 completion 开头添加结构化思考引导
-            completion = f"""<think>\n{reasoning}\n<think>\n\nFinal Answer: \\boxed{final_answer}"""
+            completion = f"""<think>\n{reasoning}\n<think>\n\nFinal Answer: \\boxed{{{final_answer}}}"""
         else:
             # 标准格式
-            completion = f"\n{reasoning}\n\nFinal Answer: \\boxed{{{final_answer}}}"
+            completion = f"{reasoning}\n\nFinal Answer: \\boxed{{{final_answer}}}"
+
+        # 如果提供了tokenizer,应用chat template
+        if self.tokenizer:
+            messages = [{"role": "user", "content": prompt}]
+            prompt_text = self.tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            # 如果没有tokenizer,直接使用原始文本
+            prompt_text = prompt
 
         return {
-            "prompt": prompt,
+            "prompt": prompt_text,
             "completion": completion,
-            "text": prompt + completion,  # 用于某些trainer
+            "text": prompt_text + completion,  # 用于某些trainer
         }
 
     def format_for_rl(self, example: Dict[str, Any]) -> Dict[str, Any]:
@@ -258,7 +268,7 @@ class GSM8KDataset(BaseDataset):
             final_answer = answer.strip()
 
         # prompt 保持不变（无论 is_think 参数如何）
-        prompt_content = f"Question: {question}\n\nPlease reason step by step, and put your final answer within \\boxed{{}}."
+        prompt_content = f"Question: {question}\n\nPlease reason step by step, and put your final answer within \\boxed{{}}.\n"
 
         # 如果提供了tokenizer,应用chat template
         if self.tokenizer:

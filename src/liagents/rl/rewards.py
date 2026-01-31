@@ -32,6 +32,7 @@ class MathRewardFunction:
         """
         # 尝试多种答案格式
         patterns = [
+            r"\\boxed\{([^}]+)\}",  # LaTeX 格式: \boxed{答案}
             r"Final Answer:\s*([^\n]+)",
             r"####\s*([^\n]+)",
             r"答案是?\s*[:：]?\s*([^\n]+)",
