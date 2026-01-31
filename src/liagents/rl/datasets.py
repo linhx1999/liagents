@@ -258,7 +258,7 @@ class GSM8KDataset(BaseDataset):
             final_answer = answer.strip()
 
         # prompt 保持不变（无论 is_think 参数如何）
-        prompt_content = f"Question: {question}\n\nLet's solve this step by step:"
+        prompt_content = f"Question: {question}\n\nPlease reason step by step, and put your final answer within \\boxed{{}}."
 
         # 如果提供了tokenizer,应用chat template
         if self.tokenizer:
