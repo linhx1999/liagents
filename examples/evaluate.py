@@ -1,10 +1,10 @@
 from liagents.rl import RLTrainer
 
 # 创建训练工具
-rl_trainer = RLTrainer("/root/autodl-tmp/outputs/Qwen2.5-0.5B-Instruct/20260131-160503")
+rl_trainer = RLTrainer("Qwen/Qwen2.5-0.5B-Instruct")
 
 # 加载数据集
-result = rl_trainer.load_dataset("/root/autodl-tmp/datasets/gsm8k")
+result = rl_trainer.load_dataset("openai/gsm8k")
 print(str(result))
 
 # 评估模型
