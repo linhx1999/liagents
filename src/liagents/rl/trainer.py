@@ -353,13 +353,14 @@ class RLTrainer:
         max_new_tokens: int = 1024,
         temperature: float = 0.0,
         do_sample: bool = False,
+        eval_batch_size: int = 8,
     ) -> str:
         """评估模型性能
 
         功能：
         1. 加载测试数据集
         2. 加载模型和 tokenizer
-        3. 生成预测
+        3. 批量生成预测
         4. 计算奖励/准确率
         5. 返回评估结果
         6. 保存评估结果到文件（使用类初始化时的 output_dir）
@@ -367,9 +368,10 @@ class RLTrainer:
         Args:
             max_samples: 最大评估样本数（-1 表示使用全量数据集）
             split: 数据集分割（默认 "test"）
-            max_new_tokens: 最大生成 token 数（默认 512）
-            temperature: 采样温度（默认 0.7）
+            max_new_tokens: 最大生成 token 数（默认 1024）
+            temperature: 采样温度（默认 0.0）
             do_sample: 是否采样（默认 False，使用贪婪解码）
+            eval_batch_size: 评估批次大小（默认 8）
 
         Returns:
             JSON 格式的评估结果
@@ -378,6 +380,7 @@ class RLTrainer:
             from .rewards import create_accuracy_reward
             from transformers import AutoModelForCausalLM
             import torch
+            from tqdm import tqdm
 
             # 确定要使用的模型路径
             model_path = (
@@ -396,7 +399,8 @@ class RLTrainer:
                 max_samples=max_samples,
                 tokenizer=self.tokenizer,
             )
-            print(f"已加载 {len(dataset)} 条数据")
+            num_samples = len(dataset)
+            print(f"已加载 {num_samples} 条数据")
 
             print(f"使用{model_source}: {model_path}...")
             try:
@@ -413,23 +417,25 @@ class RLTrainer:
                     indent=2,
                 )
 
-            # 生成预测
+            # 批量生成预测
             print("生成预测...")
+            prompts = [dataset[i]["prompt"] for i in range(num_samples)]
+            ground_truths = [dataset[i]["ground_truth"] for i in range(num_samples)]
+
             completions = []
-            ground_truths = []
-            prompts = []
+            # 分批处理
+            for i in tqdm(range(0, num_samples, eval_batch_size), desc="  评估进度"):
+                batch_prompts = prompts[i : i + eval_batch_size]
 
-            # 创建迭代器
-            from tqdm import tqdm
+                # 批量 tokenize
+                inputs = self.tokenizer(
+                    batch_prompts,
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
+                ).to(device)
 
-            iterator = tqdm(range(len(dataset)), desc="  评估进度", unit="样本")
-            for i in iterator:
-                prompt = dataset[i]["prompt"]
-                ground_truth = dataset[i]["ground_truth"]
-                prompts.append(prompt)
-
-                # 生成回答
-                inputs = self.tokenizer(prompt, return_tensors="pt").to(device)
+                # 批量生成
                 with torch.no_grad():
                     outputs = model.generate(
                         **inputs,
@@ -438,22 +444,18 @@ class RLTrainer:
                         do_sample=do_sample,
                         pad_token_id=self.tokenizer.pad_token_id,
                     )
-                # 只取生成的部分，不包括输入
-                completion = self.tokenizer.decode(
-                    outputs[0][inputs["input_ids"].shape[1] :], skip_special_tokens=True
-                )
 
-                completions.append(completion)
-                ground_truths.append(ground_truth)
+                # 批量 decode，只取生成部分
+                input_lengths = inputs["input_ids"].shape[1]
+                batch_completions = self.tokenizer.batch_decode(
+                    outputs[:, input_lengths:], skip_special_tokens=True
+                )
+                completions.extend(batch_completions)
 
             # 计算奖励
             print("计算评估指标...")
             reward_fn = create_accuracy_reward()
             rewards = reward_fn(completions, ground_truth=ground_truths)
-
-            # 计算统计信息
-            avg_reward = sum(rewards) / len(rewards)
-            accuracy = avg_reward  # 对于准确性奖励，平均奖励就是准确率
 
             # 构建详细结果
             detailed_results = []
@@ -471,6 +473,10 @@ class RLTrainer:
                     }
                 )
 
+            # 计算统计信息
+            avg_reward = sum(rewards) / len(rewards)
+            accuracy = avg_reward  # 对于准确性奖励，平均奖励就是准确率
+
             result = {
                 "status": "success",
                 "model_path": model_path,
@@ -484,6 +490,7 @@ class RLTrainer:
                     "max_new_tokens": max_new_tokens,
                     "temperature": temperature,
                     "do_sample": do_sample,
+                    "eval_batch_size": eval_batch_size,
                 },
                 "detailed_results": detailed_results,
             }
