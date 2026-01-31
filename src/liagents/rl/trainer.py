@@ -119,6 +119,9 @@ class RLTrainer:
         batch_size: int = 4,
         num_epochs: int = 2,
         learning_rate: float = 5e-5,
+        optimizer: str = "adamw_torch",
+        weight_decay: float = 0.01,
+        warmup_ratio: float = 0.1,
         use_lora: bool = True,
         lora_rank: int = 8,
         lora_alpha: int = 16,
@@ -163,6 +166,9 @@ class RLTrainer:
 
         if algorithm == "sft":
             result = self._train_sft(
+                optimizer=optimizer,
+                weight_decay=weight_decay,
+                warmup_ratio=warmup_ratio,
                 use_lora=use_lora,
                 lora_rank=lora_rank,
                 lora_alpha=lora_alpha,
@@ -200,9 +206,12 @@ class RLTrainer:
 
     def _train_sft(
         self,
-        use_lora: bool,
-        lora_rank: int,
-        lora_alpha: int,
+        optimizer: str = "adamw_torch",
+        weight_decay: float = 0.01,
+        warmup_ratio: float = 0.1,
+        use_lora: bool = True,
+        lora_rank: int = 8,
+        lora_alpha: int = 16,
         lora_target_modules: list[str] = ["q_proj", "v_proj"],
         lora_dropout: float = 0.05,
         lora_bias: Literal["none", "all", "lora_only"] = "none",
@@ -266,16 +275,13 @@ class RLTrainer:
             num_train_epochs=self.num_epochs,
             per_device_train_batch_size=self.batch_size,
             learning_rate=self.learning_rate,
+            optim=optimizer,
+            weight_decay=weight_decay,
+            warmup_ratio=warmup_ratio,
             fp16=use_fp16,
             bf16=use_bf16,
             report_to=report_to,
         )
-
-        # 计算总步数
-        total_steps = (
-            len(self.dataset)
-            // (config.per_device_train_batch_size * config.gradient_accumulation_steps)
-        ) * config.num_train_epochs
 
         # 创建训练器
         trainer = SFTTrainer(
